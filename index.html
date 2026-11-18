@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -101,6 +101,9 @@ input::placeholder{color:#a897d6}
 .ib{width:54px;height:54px;padding:0;display:flex;align-items:center;justify-content:center;background:rgba(139,92,246,.35);border:2px solid #8b5cf6;color:#fff;box-shadow:none;border-radius:12px}
 .cbox{flex:1;max-width:230px;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:rgba(255,255,255,.08);border:2px solid var(--bd);box-shadow:none;border-radius:12px;color:var(--acc);font-size:1.6rem;letter-spacing:3px;direction:ltr}.cbox svg{color:#b9a8e8}
 html,body{overscroll-behavior:none}*{-webkit-tap-highlight-color:transparent}body{-webkit-user-select:none;user-select:none}input{-webkit-user-select:text;user-select:text}
+.kb .pr{display:none}.kb .sl{min-height:42px;padding:6px}.kb .qbox{padding:10px;font-size:1.15rem;margin-bottom:8px}.kb .top{margin-bottom:6px}.kb main{padding-top:6px}
+.bd{grid-template-rows:repeat(3,auto);grid-auto-flow:column;align-items:start}
+.upd{background:#ffb703;color:#2b1055;border-radius:12px;padding:10px;margin-bottom:10px;text-align:center;font-weight:800}.upd button{width:auto;display:inline-block;margin-inline-start:8px;padding:4px 14px;background:#2b1055;color:#fff}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -112,7 +115,7 @@ const norm=s=>s.toLowerCase().replace(/[\u064B-\u0652\u0640]/g,"").replace(/[أ�
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=document.getElementById("app");
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-const BANK=`أكلة شعبية خليجية؟|كبسة/كبسه/مجبوس,مندي,مضغوط,هريس,جريش,مضبي
+const RAW=`أكلة شعبية خليجية؟|كبسة/كبسه/مجبوس,مندي,مضغوط,هريس,جريش,مضبي
 شيء تاكله مع الرز؟|دجاج/جاج/دجاجه,لحم/لحمه,سمك/سمج,خضار,لبن/روب,سلطة/سلطه
 وجبة فطور؟|بيض/بيضه,فول,جبنة/جبن,عسل,زبادي/لبن,خبز/عيش
 شيء تحطه على البيتزا؟|جبنة/جبن,زيتون,فطر,فلفل,طماطم/بندوره,بيبروني/لحم
@@ -147,17 +150,111 @@ const BANK=`أكلة شعبية خليجية؟|كبسة/كبسه/مجبوس,من
 حيوان أليف؟|قطة/قط/بسه/بزونه,كلب,عصفور,سمكة/سمك,ارنب,ببغاء/ببغا
 حيوان تشوفه في حديقة الحيوان؟|اسد/ليث,فيل,زرافة/زرافه,قرد/قرود,نمر,دب
 شيء تلبسه في الشتاء؟|جاكيت,سترة/سوتر,قفاز/قفازات,شال/وشاح,طاقية/قبعه,جزمة/حذاء
-شيء تخاف منه؟|ظلام/الظلام/العتمه,صرصور/صراصير,ثعبان/افعى/حيه,عنكبوت/عناكب,ارتفاع/المرتفعات,كلاب`.trim().split("\n").map(l=>{const[q,a]=l.split("|");return{q,a:a.split(",").map(x=>x.split("/"))}});
+شيء تخاف منه؟|ظلام/الظلام/العتمه,صرصور/صراصير,ثعبان/افعى/حيه,عنكبوت/عناكب,ارتفاع/المرتفعات,كلاب
+عاصمة عربية؟|الرياض,القاهرة,دمشق,بغداد,عمان,بيروت
+شيء تلقاه في المدرسة؟|معلم/مدرس,سبورة,طالب,كتاب,مقصف/كانتين,فصل
+مهنة يحبها الناس؟|طبيب/دكتور,مهندس,معلم/مدرس,طيار,محامي,ضابط
+شيء تسويه قبل النوم؟|جوال/اتصفح,فرشة اسنان/اغسل اسناني/فرشه,قراءة/اقرا,صلاة/اصلي,ماء/موية,دعاء/ادعي
+فاكهة صيفية؟|بطيخ,شمام,مانجو/منجا,خوخ,فراولة/فراوله,عنب
+خضار تحطه في السلطة؟|خيار,طماطم/بندوره,خس,جزر,بصل,فلفل
+شيء تشتريه من البقالة؟|حليب,خبز/عيش,بيض,ماء/موية,عصير,سكر
+مكان تتمشى فيه؟|مول/المجمع,كورنيش,حديقة,شاطئ/بحر,سوق,منتزه
+شيء ما تقدر تعيش بدونه؟|ماء/موية/مي,اكل,هواء,جوال,نوم,فلوس/مال
+صفة تحبها في الصديق؟|وفاء/وفي,صدق/صادق,كرم/كريم,طيبة/طيب,خفة دم/خفيف دم,امانة/امين
+شيء تسويه لما تزعل؟|بكاء/ابكي,نوم/انام,اكل,اغاني/اسمع اغاني,طلعه/امشي,صمت/اسكت
+شيء تشوفه في السماء؟|غيم/سحاب,شمس,قمر,نجوم/نجم,طيارة/طائره,قوس قزح
+شيء تسويه في المطر؟|امشي/اتمشى,شاي/اشرب شاي,نوم/انام,تصوير/اصور,طلعه/اطلع,قهوة
+شيء تحتاجه في الكشتة؟|خيمة/خيمه,حطب,فحم/نار,دلة/قهوة,بطانية/بطانيه,كراسي/كرسي
+اسم شهر هجري؟|رمضان,محرم,شوال,ذو الحجة/ذي الحجه,رجب,شعبان
+شيء تفعله في رمضان؟|صيام/اصوم,صلاة/تراويح,قران/قراءة قرآن,سهر,عزايم/افطار,صدقة
+شيء يتشرب مع الكبسة؟|عصير,ماء/موية,بيبسي/كولا,لبن,شاي,سفن اب/سفن
+نوع قهوة؟|اسبريسو,لاتيه,كابتشينو,امريكانو,تركية/تركيه,موكا
+نوع فيلم؟|اكشن,كوميدي,رعب,دراما,خيال علمي,رومانسي
+شيء تسويه في السينما؟|اشوف فلم/فيلم,فشار/اكل فشار,مشروب/اشرب,اصور,انام,اضحك
+شيء مزعج في الفصل؟|كلام/ثرثره,ازعاج,جوال,نوم,تاخير,ضحك
+أداة تستخدمها في المطبخ؟|سكين,ملعقة/معلقه,شوكة/شوكه,قدر,مقلاة/طاوه,مقص
+شيء يجي بالثنائي؟|جزمة/حذاء,شراب/جوارب,قفاز/قفازات,نظارة,خاتم/دبله,حلق/اقراط
+مكان تنتظر فيه؟|مستشفى,مطار,بنك,مطعم,محطة/موقف,صالون/حلاق
+شيء تغسله؟|ايدي/يدين,صحون/اطباق,ملابس/هدوم,وجه,شعر/راس,خضار
+شيء تتعلمه في الطفولة؟|مشي/امشي,كلام/نطق,قراءة/اقرا,سباحة/سباحه,دراجة/ركوب دراجه,كتابة/اكتب
+حيوان بحري؟|سمك/سمكه,حوت,دولفين/دلفين,قرش,سلحفاة/سلحفاه,اخطبوط
+شيء بارد؟|ثلج,ايسكريم/ايس كريم,ثلاجة/ثلاجه,شتاء,ماء/موية,مكيف
+شيء حار؟|فلفل,شمس,نار,شاي,قهوة,صيف
+شيء يدور؟|مروحة/مروحه,عجلة/عجل,ساعة,الارض/كوكب,دولاب,غسالة/غساله
+شيء طويل؟|برج,زرافة/زرافه,جبل,شجرة/شجره,عمارة/عماره,سلم
+شيء تلبسه في اليد؟|ساعة/ساعه,خاتم/دبله,سوار/اسواره,قفاز/قفازات,حنا,مسبحة/سبحه
+رياضة تمارسها؟|كرة قدم/كوره/قدم,سباحة/سباحه,جري/ركض,مشي,كرة سلة/سله,جيم/حديد
+لعبة جماعية؟|كرة قدم/كوره,بلوت,كيرم,شطرنج,مافيا,اونو
+شيء تلقاه في الغرفة؟|سرير,دولاب/خزانه,مكتب/طاوله,كرسي,مرايا,تلفزيون/تلفاز
+شيء تلقاه في الحمام؟|مرايا,صابون/صابونه,فرشة اسنان/فرشه,شامبو,منشفة/فوطه,مرحاض
+شيء تلقاه في الصالة؟|كنب/كنبه/صوفا,تلفزيون/تلفاز,طاولة/طاوله,سجاد/سجاده,ستارة/ستاره,مكيف
+شيء تبي تتعلمه؟|لغة/انجليزي,برمجة/برمجه,سباحة/سباحه,طبخ,تصوير,عزف
+شيء يخليك تضحك؟|نكتة/نكت,مقلب,صديق/اصحاب,فيديو,مسلسل/كوميدي,طفل/اطفال
+أكلة تحب تطبخها؟|كبسة/كبسه,مكرونة/باستا,رز/ارز,دجاج/جاج,بيض,سمك
+وجبة عشاء خفيفة؟|سندويش/سندويتش,شوربة/شوربه,سلطة/سلطه,بيض,زبادي/لبن,فول
+شيء تضيفه على الشاي؟|سكر,نعناع,حليب/حلب,هيل/هال,زنجبيل,ليمون
+مدينة سياحية؟|دبي,باريس,لندن,اسطنبول,روما,نيويورك
+شيء يفحصونه عند الدكتور؟|ضغط,سكر,دم/تحليل,اسنان,عيون,قلب
+هدية للأم؟|ورد/زهور,عطر,ذهب/خاتم,شنطة/شنطه,ساعة/ساعه,شوكولاتة/شوكولا
+مكان تتصور فيه؟|بحر/شاطئ,حديقة/حديقه,برج,مول,جبل,مقهى/كافيه
+شيء تلقاه في المول؟|محلات/محل,مطعم/مطاعم,سينما,مصعد/درج,العاب,كافيه/مقهى
+شيء تسويه في الجيم؟|حديد/اوزان,جري/مشي,سباحة/سباحه,يوغا,تمارين/تمرين,بطن
+مشروب ساخن؟|قهوة,شاي,حليب,شوكولاتة ساخنة/هوت شوكليت,زنجبيل,نسكافيه
+صوت يزعجك؟|منبه,صراخ/صياح,مثقاب/دريل,جرس,نباح/كلب,بكاء
+شيء تسويه بعد الدوام؟|نوم/انام,اكل,جوال,جيم/رياضه,طلعه/اطلع,اصحاب/جلسه
+شيء تنساه كثير؟|مفتاح/مفاتيح,جوال,شاحن,محفظة/محفظه,موعد/مواعيد,اسم/اسماء
+شيء تخليه عند الباب؟|جزمة/حذاء/نعال,شنطة/شنطه,مفتاح,مظلة/شمسيه,جاكيت,سلة/سله
+شيء تلقاه في الحديقة؟|شجر/شجره,عشب/نجيله,ورد/زهور,بنش/كرسي,ارجوحة/ارجوحه,نافورة/نافوره
+شيء ما يتحمل الماء؟|جوال,ورق,لابتوب/كمبيوتر,كتاب,سماعات,دفتر
+أكلة هندية؟|برياني,تكا/تيكا,تندوري,كاري,نان,سمبوسة/سمبوسه
+أكلة إيطالية؟|بيتزا,باستا/مكرونه,لازانيا,ريزوتو,تيراميسو,سباغيتي
+أكلة يابانية؟|سوشي,رامن,تمبورا,ساشيمي,اودون,تيرياكي
+شيء ممكن تتسلقه؟|جبل,شجرة/شجره,سلم,حبل
+شيء تسلقه؟|بيض,بطاطس/بطاطا,ذرة,خضار
+شيء تفتحه كل يوم؟|باب,جوال/شاشه,نافذة/شباك,ثلاجة/ثلاجه
+شيء يطير؟|طيارة/طائره,طير/عصفور,طيارة ورق/طائره ورقيه,درون
+شيء تتصل عليه؟|امي/ام/ماما,صديق/صاحبي,ابوي/اب/بابا,مطعم
+فصل من السنة؟|شتاء,صيف,ربيع,خريف
+اتجاه؟|شمال,جنوب,شرق,غرب
+شيء تكتب عليه؟|ورق/ورقه,دفتر,سبورة/سبوره,جوال
+وجبة في اليوم؟|غداء,عشاء,فطور/افطار,سحور
+شيء تشتريه من الصيدلية؟|دواء/علاج,فيتامين/فيتامينات,مسكن/بنادول,كمامة/كمامه
+عضو في الوجه؟|عين/عيون,انف,فم,اذن/اذان
+حيوان في المزرعة؟|بقرة/بقره,خروف/غنم,دجاجة/دجاجه,حصان
+شيء تلبسه في القدم؟|جزمة/حذاء,شراب/جوارب,نعال/شبشب,صندل
+جهاز في البيت؟|تلفزيون/تلفاز,ثلاجة/ثلاجه,غسالة/غساله,مكيف
+مشروب غازي؟|بيبسي,كولا/كوكا,سفن اب/سفن,فانتا
+اسم بنت؟|فاطمة/فاطمه,نورة/نوره,سارة/ساره,مريم
+شيء تسويه في الصباح؟|فرشة اسنان/اغسل اسناني,قهوة/شاي,فطور/افطار,دش/استحمام,لبس/البس
+شيء تسويه في العطلة؟|نوم,سفر,طلعه/اطلع,العاب/لعب,اصحاب/جلسه
+شيء ملون؟|قوس قزح,ورد/زهور,بالونات/بلونات,لوحة/لوحه,فراشة/فراشه
+فاكهة حمراء؟|فراولة/فراوله,تفاح,كرز,رمان,بطيخ
+فاكهة صفراء؟|موز,ليمون,اناناس,مانجو/منجا,شمام
+شيء يلمع؟|نجوم/نجمه,ذهب,الماس,قمر,مرايا
+شيء تلقاه عند الدكتور؟|سماعة/سماعه,سرير,ابرة/ابره,ممرضة/ممرضه,وصفة/ورقه
+شيء تستخدمه في الكتابة؟|قلم,ورق/ورقه,دفتر,كمبيوتر/لابتوب,جوال
+شيء ثقيل؟|حديد,فيل,جبل,حجر,رصاص
+شيء صغير؟|نملة/نمل,رز/حبة رز,ذرة,بذرة/بزر,نقطة
+شيء ناعم؟|قطن,حرير,ريش,فرو,وسادة/مخدة
+شيء يرن؟|جوال/تلفون,جرس,منبه,ساعة,انذار
+آلة موسيقية؟|عود,بيانو,جيتار/قيتار,طبل,كمان
+شيء تدرسه في الجامعة؟|طب,هندسة,ادارة,قانون/حقوق,برمجة/حاسب
+ماركة ملابس؟|نايك,اديداس,زارا,جوتشي,بوما
+شيء تسويه مع العائلة؟|اكل/عزومه,سفر,جلسه,العاب/لعب,تسوق/اتسوق
+بلد خليجي؟|السعودية,الامارات,الكويت,قطر,عمان,البحرين`.trim().split("\n");
+const parseQ=l=>{const[q,a]=l.split("|");return{q,a:a.split(",").map(x=>x.split("/"))}};
+const BANK=RAW.map(parseQ);
+const VER="20261118a";
 const PTS=[40,30,20,15,10,5],SECS=60,TRIES=5,HINTS=3,ROUNDS=5,MAX=20;
 const lev=(a,b)=>{const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i]);for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n]};
 function match(k,A,bd){if(!k)return -1;const tk=k.split(" ");for(let i=0;i<A.length;i++){if(bd[i])continue;for(const x of A[i]){const y=norm(x);if(k===y||tk.includes(y)||(y.length>=4&&k.length>=4&&lev(k,y)<=1))return i}}return -1}
-function pickQs(){let seen=[];try{seen=JSON.parse(localStorage.getItem("seenq")||"[]")}catch(e){}let pool=BANK.map((_,i)=>i).filter(i=>!seen.includes(i));if(pool.length<ROUNDS){seen=[];pool=BANK.map((_,i)=>i)}const qs=shuffle(pool).slice(0,ROUNDS);try{localStorage.setItem("seenq",JSON.stringify(seen.concat(qs)))}catch(e){}return qs}
+function pickQs(ex){let seen=[];try{seen=JSON.parse(localStorage.getItem("seenq")||"[]")}catch(e){}const bad=new Set([...seen,...(ex||[])]);let pool=BANK.map((_,i)=>i).filter(i=>!bad.has(i));if(pool.length<ROUNDS){seen=[];pool=BANK.map((_,i)=>i)}const sh=shuffle(pool);let qs=[];for(const L of [4,5]){const k=sh.find(i=>BANK[i].a.length===L&&!qs.includes(i));if(k!==undefined)qs.push(k)}for(const i of sh){if(qs.length>=ROUNDS)break;if(!qs.includes(i))qs.push(i)}qs=shuffle(qs);try{localStorage.setItem("seenq",JSON.stringify(seen.concat(qs)))}catch(e){}return qs}
 let revTimer=null;
 let AC=null;
 const ac=()=>{if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==="suspended")AC.resume();return AC};
 document.addEventListener("click",ac);
 function tone(f,t,d,ty,v,sl){const c=ac();if(!c)return;const o=c.createOscillator(),g=c.createGain(),n=c.currentTime+t;o.type=ty;o.frequency.setValueAtTime(f,n);if(sl)o.frequency.exponentialRampToValueAtTime(sl,n+d);g.gain.setValueAtTime(v,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(c.destination);o.start(n);o.stop(n+d+.02)}
-const SND={win:()=>{tone(1175,0,.5,"sine",.14);tone(2350,0,.3,"sine",.04);tone(1568,.13,.6,"sine",.12)},bad:()=>{tone(150,0,.18,"square",.09);tone(150,.22,.34,"square",.09)},ding:()=>tone(1568,0,.18,"sine",.09),soft:()=>tone(200,0,.15,"triangle",.07,150),tick:()=>tone(1000,0,.05,"square",.04),start:()=>[392,523,659].forEach((f,i)=>tone(f,i*.1,.18,"triangle",.12)),end:()=>[784,659,523].forEach((f,i)=>tone(f,i*.12,.25,"sine",.12)),fan:()=>[523,523,523,659,784,659,784,1047].forEach((f,i)=>tone(f,i*.13,.25,"square",.07)),pop:()=>tone(600,0,.12,"sine",.1,900)};
+const SND={win:()=>{[659,784,988,1319].forEach((f,k)=>tone(f,k*.07,.24,"triangle",.15));tone(2637,.3,.45,"sine",.05)},bad:()=>{tone(311,0,.3,"sawtooth",.1,233);tone(233,.28,.5,"sawtooth",.1,150)},ding:()=>{tone(1397,0,.14,"sine",.08);tone(1760,.09,.2,"sine",.06)},soft:()=>tone(200,0,.15,"triangle",.07,150),tick:()=>tone(1000,0,.05,"square",.04),start:()=>[392,523,659].forEach((f,i)=>tone(f,i*.1,.18,"triangle",.12)),end:()=>[784,659,523].forEach((f,i)=>tone(f,i*.12,.25,"sine",.12)),fan:()=>[523,523,523,659,784,659,784,1047].forEach((f,i)=>tone(f,i*.13,.25,"square",.07)),pop:()=>tone(600,0,.12,"sine",.1,900)};
 const snd=k=>{try{SND[k]()}catch(e){}};
 
 // ====== الصق إعدادات Firebase هنا ======
@@ -167,28 +264,30 @@ const configured=!Object.values(FIREBASE_CONFIG).some(v=>String(v).includes("PAS
 const CH="abcdefghjkmnpqrstuvwxyz23456789";
 const mkId=()=>Math.random().toString(36).slice(2,10);
 let db=null,R=null,base=null,pid=(()=>{try{let v=sessionStorage.getItem("pid");if(!v){v=mkId();sessionStorage.setItem("pid",v)}return v}catch(e){return mkId()}})(),P={},view="lobby",code="",nick="",isCreator=false,joinedAt=0,notice="",hostTimer=null,ldTimer=null,localStart=0,lastRs=-1,lastEv=null,mySeq=0,rxN=0,seenRx={},primed=false,toast="",hintsLeft=HINTS,hintSlots=[],lastPh="",sel=null,myS={};
-const G0=()=>({ph:"lobby",r:0,qs:[],tot:{},rounds:ROUNDS,seq:0,rs:0,bd:{},att:{},sn:{},ev:{n:0},ld:""});
+const G0=()=>({qd:[],ver:VER,used:[],ph:"lobby",r:0,qs:[],tot:{},rounds:ROUNDS,seq:0,rs:0,bd:{},att:{},sn:{},ev:{n:0},ld:""});
 let G=G0();
 const newCode=()=>String(10000+Math.floor(Math.random()*90000));
 const dig=t=>String(t||"").replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/\D/g,"");
-let pending=(()=>{const c=dig(location.hash);return c.length>=4?c:""})();
+let pending=(()=>{let r="";try{r=new URLSearchParams(location.search||"").get("r")||""}catch(e){}const c=dig(r||location.hash);return c.length>=4?c:""})();
 const players=()=>Object.entries(P).filter(([k,v])=>v&&v.n).map(([k,v])=>({peer:k,presence:v,isMe:k===pid})).sort((a,b)=>(a.presence.t-b.presence.t)||(a.peer<b.peer?-1:1)).slice(0,MAX);
 const meP=()=>players().find(p=>p.isMe);
 const ldr=()=>{const pl=players();return pl.some(p=>p.peer===G.ld)?G.ld:(pl[0]?pl[0].peer:"")};
 const amHost=()=>ldr()===pid&&!!meP();
 const nameOf=id=>{const p=players().find(x=>x.peer===id);return p?p.presence.n:null};
-const pub=()=>base&&base.child("g").set(G);
-const normG=g=>({ph:g.ph,r:g.r||0,qs:g.qs||[],tot:g.tot||{},rounds:g.rounds||ROUNDS,seq:g.seq||0,rs:g.rs||0,bd:g.bd||{},att:g.att||{},sn:g.sn||{},ev:g.ev||{n:0},ld:g.ld||""});
+const pub=()=>{if(base){G.ver=VER;return base.child("g").set(G)}};
+const normG=g=>({qd:g.qd||[],ver:g.ver||"",used:g.used||[],ph:g.ph,r:g.r||0,qs:g.qs||[],tot:g.tot||{},rounds:g.rounds||ROUNDS,seq:g.seq||0,rs:g.rs||0,bd:g.bd||{},att:g.att||{},sn:g.sn||{},ev:g.ev||{n:0},ld:g.ld||""});
 const tries=id=>G.att[id]??TRIES;
+const curQ=()=>{const l=(G.qd||[])[G.r];return l?parseQ(l):null};
+const nA=()=>((curQ()||{a:[]}).a.length)||6;
 const found=id=>Object.keys(G.bd[id]||{}).length;
-const done=()=>{const pl=players();return pl.length>0&&pl.every(p=>tries(p.peer)<=0||found(p.peer)>=6)};
-function startGame(){const sn={};players().forEach(p=>sn[p.peer]=p.presence.s|0);G={...G0(),ld:ldr(),ph:"ld",qs:pickQs(),seq:G.seq+1,rs:G.rs+1,sn};pub()}
+const done=()=>{const pl=players();return pl.length>0&&pl.every(p=>tries(p.peer)<=0||found(p.peer)>=nA())};
+function startGame(){const sn={};players().forEach(p=>sn[p.peer]=p.presence.s|0);const ex=G.used||[],qs=pickQs(ex),used=BANK.length-ex.length<ROUNDS?qs:ex.concat(qs);G={...G0(),ld:ldr(),ph:"ld",qs,qd:qs.map(i=>RAW[i]),used,seq:G.seq+1,rs:G.rs+1,sn};pub()}
 function startRound(){G.ph="ask";G.bd={};G.att={};G.rs++;G.seq++;pub();armTimer()}
 function armTimer(){clearTimeout(hostTimer);hostTimer=setTimeout(endRound,SECS*1000+800)}
 function endRound(){if(!amHost()||G.ph!=="ask")return;clearTimeout(hostTimer);hostTimer=null;nextRound()}
 function nextRound(){if(G.r+1>=G.rounds){G.ph="end"}else{G.r++;G.ph="ld";G.bd={};G.att={};G.rs++}G.seq++;pub()}
 function handle(){
- const A=BANK[G.qs[G.r]].a,pend=players().filter(p=>(p.presence.s|0)>(G.sn[p.peer]|0)&&p.presence.rd===G.r).sort((a,b)=>(a.presence.ts|0)-(b.presence.ts|0));
+ const A=curQ().a,pend=players().filter(p=>(p.presence.s|0)>(G.sn[p.peer]|0)&&p.presence.rd===G.r).sort((a,b)=>(a.presence.ts|0)-(b.presence.ts|0));
  if(!pend.length)return;
  pend.forEach(p=>{G.sn[p.peer]=p.presence.s|0;const a=tries(p.peer);if(a<=0)return;
   const mine=G.bd[p.peer]||(G.bd[p.peer]={}),have={};Object.keys(mine).forEach(k=>have[+k.slice(1)]=1);const i=match(norm(p.presence.a||""),A,have);
@@ -199,13 +298,13 @@ function handle(){
 function onPeers(){
  const pl=players();
  if(amHost()){
-  if(G.ph==="ask"){if(!hostTimer)armTimer();if(BANK[G.qs[G.r]])handle()}
+  if(G.ph==="ask"){if(!hostTimer)armTimer();if(curQ())handle()}
   if(G.ph==="ld"&&!ldTimer)ldTimer=setTimeout(()=>{ldTimer=null;if(amHost()&&G.ph==="ld")startRound()},3500);
   if(G.ph==="rev"&&!revTimer)revTimer=setTimeout(()=>{revTimer=null;if(amHost()&&G.ph==="rev")nextRound()},7000);
  }else{clearTimeout(hostTimer);hostTimer=null;clearTimeout(ldTimer);ldTimer=null;clearTimeout(revTimer);revTimer=null}
  if(G.rs!==lastRs){lastRs=G.rs;localStart=Date.now();hintSlots=[];if(G.ph==="ld"&&G.r===0)hintsLeft=HINTS;if(G.ph==="ask"&&primed)snd("start")}
  if(G.ev&&G.ev.n!==lastEv){const e=G.ev;if(primed&&lastEv!==null)snd(e.by===pid?(e.k==="ok"?"win":"bad"):(e.k==="ok"?"ding":"soft"));lastEv=e.n}
- if(G.ph==="ask"&&primed&&found(pid)>=6&&celebRs!==G.rs){celebRs=G.rs;const pts=Object.values(G.bd[pid]||{}).reduce((a,b)=>a+b,0);showCeleb(pts);setTimeout(()=>snd("fan"),350)}
+ if(G.ph==="ask"&&primed&&found(pid)>=nA()&&celebRs!==G.rs){celebRs=G.rs;const pts=Object.values(G.bd[pid]||{}).reduce((a,b)=>a+b,0);showCeleb(pts);setTimeout(()=>snd("fan"),350)}
  if(G.ph!==lastPh){if(primed){if(G.ph==="rev")snd("end");if(G.ph==="end")snd("fan")}lastPh=G.ph}
  pl.forEach(p=>{const n=p.presence.rs|0;if(n>(seenRx[p.peer]|0)){seenRx[p.peer]=n;if(primed&&!p.isMe){toast=p.presence.n+" "+p.presence.rx;snd("pop");setTimeout(()=>{toast="";render()},2500)}}});
  primed=true;render();
@@ -217,7 +316,8 @@ async function enter(c,create){
  try{
   if(create){for(let i=0;i<6;i++){const s=await db.ref("rooms/"+c+"/p").get();if(!s.exists())break;c=newCode()}await db.ref("rooms/"+c).remove()}
   else if((await db.ref("rooms/"+c+"/k/"+pid).get()).exists()){notice="تم طردك من هالغرفة";return render()}
-  code=c;base=db.ref("rooms/"+c);isCreator=create;joinedAt=create?0:Date.now();primed=false;lastEv=null;lastPh="";sel=null;G=G0();if(create)G.ld=pid;
+  if(!create&&!(await db.ref("rooms/"+c+"/p").get()).exists()){notice="ما لقيت غرفة بهالكود، تأكد من الرابط أو الكود";return render()}
+  code=c;pending="";try{history.replaceState(null,"",location.pathname)}catch(e){}base=db.ref("rooms/"+c);isCreator=create;joinedAt=create?0:Date.now();primed=false;lastEv=null;lastPh="";sel=null;G=G0();if(create)G.ld=pid;
   myS={n:nick.slice(0,14),e:myAv,t:joinedAt,a:"",s:0,rd:-1,rs:0,ts:0};
   const me=base.child("p/"+pid);me.onDisconnect().remove();await me.set(myS);
   R={presence:p=>{myS={...myS,...p};P[pid]=myS;return me.update(p)},leave:()=>{base.off();me.remove()}};
@@ -227,11 +327,23 @@ async function enter(c,create){
  }catch(e){notice="تعذر الدخول للغرفة";R=null;render()}
 }
 function leave(){clearTimeout(hostTimer);hostTimer=null;clearTimeout(ldTimer);ldTimer=null;clearTimeout(revTimer);revTimer=null;if(R)R.leave();R=null;base=null;P={};G=G0();lastRs=-1;sel=null;view="lobby";render()}
+function patch(a,b){
+ const ac=[...a.childNodes],bc=[...b.childNodes];
+ bc.forEach((y,i)=>{const x=ac[i];
+  if(!x){a.appendChild(y.cloneNode(true));return}
+  if(x.nodeType!==y.nodeType||x.nodeName!==y.nodeName||(x.nodeType===1&&x.id!==y.id)){a.replaceChild(y.cloneNode(true),x);return}
+  if(y.nodeType===3){if(x.nodeValue!==y.nodeValue)x.nodeValue=y.nodeValue;return}
+  if(y.nodeType!==1)return;
+  [...x.attributes].forEach(at=>{if(!y.hasAttribute(at.name))x.removeAttribute(at.name)});
+  [...y.attributes].forEach(at=>{if(x.getAttribute(at.name)!==at.value&&!(x.nodeName==="INPUT"&&at.name==="value"))x.setAttribute(at.name,at.value)});
+  if(x.nodeName!=="INPUT")patch(x,y)});
+ while(a.childNodes.length>bc.length)a.removeChild(a.lastChild);
+}
 function render(){
- const ae=document.activeElement,keep=ae&&ae.id?{id:ae.id,v:ae.value}:null;
- $.innerHTML=(toast?`<div class="toast">${esc(toast)}</div>`:"")+(avOpen?avEdit():view==="lobby"?lobby():roomView());
- bind();
- if(keep){const e=document.getElementById(keep.id);if(e){if(e.tagName==="INPUT")e.value=keep.v;e.focus()}}
+ const t=document.createElement("div");t.innerHTML=(view==="room"&&G.ver&&G.ver!==VER?`<div class="upd">فيه نسخة أحدث من اللعبة <button id="upd">تحديث</button></div>`:"")+(avOpen?avEdit():view==="lobby"?lobby():roomView());
+ patch($,t);bind();
+ let T=document.getElementById("tst");
+ if(toast){if(!T){T=document.createElement("div");T.id="tst";T.className="toast";document.body.appendChild(T)}T.textContent=toast}else if(T)T.remove();
 }
 const AK=["g","sk","h","ey","mo","ex","bg"],AN={g:2,sk:5,h:7,ey:4,mo:3,ex:4,bg:8};
 const parseAv=c=>/^\d{7}$/.test(c||"")?Object.fromEntries(AK.map((k,i)=>[k,+c[i]])):null;
@@ -288,20 +400,20 @@ function showCeleb(pts){
 const IC={cp:`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>`,sh:`<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"/></svg>`,ad:`<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M19 7v6M16 10h6"/></svg>`};
 const shareBlock=()=>`<div class="mut" style="font-weight:700;margin-bottom:8px">شارك رمز الغرفة:</div><div class="shr"><button class="ib" id="inv">${IC.ad}</button><button class="ib" id="shr">${IC.sh}</button><button class="cbox" id="cpc"><b>${esc(code)}</b>${IC.cp}</button></div>`;
 const PUB="https://xsdgyhkulp-crypto.github.io/nafs/",isWeb=()=>/^https?:$/.test(location.protocol);
-const roomLink=()=>(isWeb()?location.href.split("#")[0]:PUB)+"#"+code;
+const roomLink=()=>(isWeb()?location.href.split("#")[0].split("?")[0]:PUB)+"?r="+code;
 const note=t=>{toast=t;render();setTimeout(()=>{toast="";render()},1800)};
 async function copyTxt(t){try{await navigator.clipboard.writeText(t);return true}catch(e){try{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();const ok=document.execCommand("copy");a.remove();return ok}catch(e2){return false}}}
 function lobby(){
  return `<div class="center"><div class="logo">نفس الموجة</div><p class="sub">خمّن أشهر الإجابات قبل لا يخلص الوقت، وكل إجابة صح تجيب نقاط!</p></div>
  <div class="card"><button class="av" id="avh" style="width:auto;margin:0 auto 12px"><span class="ci lg" style="margin:0">${avs(myAv)}</span><span class="an" style="max-width:none">تغيير الشخصية</span></button>${pending?`<p class="center" style="color:#ffd166;font-weight:700;margin:0 0 10px">تمت دعوتك للغرفة ${pending}، اكتب اسمك واضغط انضم</p>`:""}<input id="nm" maxlength="14" value="${esc(nick)}" placeholder="اكتب اسمك" style="text-align:center">
- <button class="bigb" id="mk">أنشئ<br>غرفة</button>
- <div class="row" style="align-items:center;justify-content:center;gap:14px"><input id="cd" maxlength="6" inputmode="numeric" placeholder="كود الغرفة" value="${pending}" style="text-align:center;max-width:190px"><button class="dia" id="jn"><span>انضم</span></button></div>
+ ${pending?`<button class="bigb" id="jp">انضم<br>${pending}</button>`:`<button class="bigb" id="mk">أنشئ<br>غرفة</button>`}
+ ${pending?`<button class="sm sec" id="mk" style="display:block;margin:0 auto">أو أنشئ غرفة جديدة</button>`:""}<div class="row" style="${pending?"display:none;":""}align-items:center;justify-content:center;gap:14px"><input id="cd" maxlength="6" inputmode="numeric" placeholder="كود الغرفة" value="${pending}" style="text-align:center;max-width:190px"><button class="dia" id="jn"><span>انضم</span></button></div>
  ${notice?`<p class="center" style="color:#ff6b81;font-weight:700">${esc(notice)}</p>`:""}</div>
  <p class="mut center">حتى ${MAX} لاعب في الغرفة، وكل واحد يلعب من جواله.</p>`;
 }
 const mask=x=>[...x].map((c,k)=>k%2===0||c===" "?c:"_").join("");
 function slots(rev){
- const A=BANK[G.qs[G.r]].a,mine=G.bd[pid]||{};
+ const A=curQ().a,mine=G.bd[pid]||{};
  return `<div class="bd">${A.map((al,i)=>{const b=mine["k"+i];return b!==undefined?`<div class="sl on"><small>${b}</small>${esc(al[0])}</div>`:rev?`<div class="sl miss"><small>${PTS[i]}</small>${esc(al[0])}</div>`:hintSlots.includes(i)?`<div class="sl hint">${esc(mask(al[0]))}</div>`:`<div class="sl"><span class="nm">${i+1}</span></div>`}).join("")}</div>`;
 }
 const topIds=()=>{const pl=players(),m=Math.max(0,...pl.map(p=>G.tot[p.peer]||0));return m>0?pl.filter(p=>(G.tot[p.peer]||0)===m).map(p=>p.peer):[]};
@@ -321,21 +433,21 @@ function roomView(){
  if(R&&!me){const n=Object.values(P).filter(v=>v&&v.n).length;return n>MAX?`<div class="card center"><div class="big">الغرفة ممتلئة</div><p class="mut">الحد الأقصى ${MAX} لاعب.</p><button id="lv">رجوع</button></div>`:`<div class="card center"><div class="sp"></div><p class="mut">جاري الاتصال…</p></div>`}
  const head=`<div class="card center">${shareBlock()}<div class="mut">${pl.length} / ${MAX} لاعبين</div>${G.ph==="lobby"?row(pl,false)+(host&&pl.length>1?'<p class="mut">اضغط على اسم لاعب عشان تنقل له القيادة أو تطرده</p>':"")+'<button class="sm sec" id="avb" style="margin-top:8px">تغيير الشخصية</button>':""}</div>`;
  let body="";
- if(G.ph!=="lobby"&&G.ph!=="ld"&&G.ph!=="end"&&!BANK[G.qs[G.r]])body=`<div class="card center"><div class="sp"></div></div>`;
+ if(G.ph!=="lobby"&&G.ph!=="ld"&&G.ph!=="end"&&!curQ())body=`<div class="card center"><div class="sp"></div><p class="mut">جاري تحميل السؤال… إذا طولت اضغط تحديث</p><button class="sm sec" id="upd">تحديث اللعبة</button></div>`;
  else if(G.ph==="lobby"){
   if(pl.length<2&&!isCreator)body=`<p class="center mut">ما لقيت أحد بهالكود، تأكد منه.</p>`;
   body+=host?`<div class="card center"><div class="big">${ROUNDS} جولات</div></div><button id="st" ${pl.length<2?"disabled":""}>ابدأ اللعب</button>${pl.length<2?'<p class="center mut">شارك الكود مع أصحابك، أقل شي لاعبين اثنين</p>':""}`:`<p class="center big">بانتظار القائد يبدأ اللعبة…</p>`;
  }else if(G.ph==="ld"){
   body=`<div class="card center"><div class="sp"></div><div class="big">${G.r===0?"جاري تجهيز اللعبة…":"الجولة "+(G.r+1)}</div><div class="q" id="cd3" style="font-size:3rem;color:var(--acc)"></div></div>`;
  }else if(G.ph==="ask"){
-  const t=tries(pid),full=found(pid)>=6,rem=Math.max(0,SECS-Math.floor((Date.now()-localStart)/1000));
+  const t=tries(pid),full=found(pid)>=nA(),rem=Math.max(0,SECS-Math.floor((Date.now()-localStart)/1000));
   body=`<div class="top"><div class="tl"><span class="lb2">الوقت</span><span class="bar"><i id="tmb" style="width:${rem/SECS*100}%"></i></span><b id="tm">${rem}</b></div><div class="tl"><span class="lb2">المحاولات</span><span class="hts">${hearts(t)}</span></div></div>
-  <div class="qbox"><span class="rd">الجولة ${G.r+1} / ${G.rounds}</span>${esc(BANK[G.qs[G.r]].q)}</div>${slots(false)}
-  ${full?`<p class="center big">جبت كل الإجابات 🎉<br><span class="mut" style="font-size:.9rem">انتظر لين يخلص السؤال</span></p>`:t>0?`<div class="row"><input id="a" maxlength="24" placeholder="اكتب جوابك" autocomplete="off"><button class="sm" id="ok" style="width:70px">✓</button></div>
-  <div class="row"><button class="sm sec" id="ht" style="width:100%" ${hintsLeft<=0||hintSlots.length>0?"disabled":""}>تلميح (${hintsLeft})</button></div>`:`<p class="center mut">خلصت محاولاتك، انتظر البقية</p>`}
+  <div class="qbox"><span class="rd">الجولة ${G.r+1} / ${G.rounds}</span>${esc(curQ().q)}</div>${full?`<p class="center big">جبت كل الإجابات 🎉<br><span class="mut" style="font-size:.9rem">انتظر لين يخلص السؤال</span></p>`:t>0?`<div class="row"><input id="a" maxlength="24" placeholder="اكتب جوابك" autocomplete="off" enterkeyhint="send"><button class="sm" id="ok" style="width:70px">✓</button></div>`:`<p class="center mut">خلصت محاولاتك، انتظر البقية</p>`}
+  ${slots(false)}
+  ${!full&&t>0?`<div class="row"><button class="sm sec" id="ht" style="width:100%" ${hintsLeft<=0||hintSlots.length>0?"disabled":""}>تلميح (${hintsLeft})</button></div>`:""}
   ${row(pl,true)}`;
  }else if(G.ph==="rev"){
-  body=`<div class="qbox"><span class="rd">نتيجة الجولة ${G.r+1}</span>${esc(BANK[G.qs[G.r]].q)}</div>${slots(true)}${row(pl,true)}<p class="center mut">${G.r+1>=G.rounds?"النتيجة النهائية بعد قليل…":"الجولة الجاية بعد قليل…"}</p>`;
+  body=`<div class="qbox"><span class="rd">نتيجة الجولة ${G.r+1}</span>${esc(curQ().q)}</div>${slots(true)}${row(pl,true)}<p class="center mut">${G.r+1>=G.rounds?"النتيجة النهائية بعد قليل…":"الجولة الجاية بعد قليل…"}</p>`;
  }else{
   const rk=pl.slice().sort((a,b)=>(G.tot[b.peer]||0)-(G.tot[a.peer]||0)),mr=rk.findIndex(p=>p.isMe)+1;
   body=`<div class="card center">${me?circ(me.presence.n,"lg",me.presence.e):""}<div class="rk">المركز ${ORD[mr-1]||mr}</div></div>
@@ -348,15 +460,16 @@ function roomView(){
 function bind(){
  const g=id=>document.getElementById(id);
  if(g("mk"))g("mk").onclick=()=>enter(newCode(),true);
+ if(g("jp"))g("jp").onclick=()=>enter(pending,false);
  if(g("jn"))g("jn").onclick=()=>{const c=dig(g("cd").value);if(!c){notice="اكتب كود الغرفة";return render()}enter(c,false)};
  if(g("st"))g("st").onclick=startGame;
  if(g("ok")){const send=()=>{const v=g("a").value.trim();if(!norm(v))return;mySeq++;R.presence({a:v,s:mySeq,rd:G.r,ts:Date.now()});g("a").value=""};g("ok").onclick=send;g("a").onkeydown=e=>{if(e.key==="Enter")send()}}
- if(g("ht"))g("ht").onclick=()=>{if(hintsLeft<=0||hintSlots.length>0)return;const A=BANK[G.qs[G.r]].a,i=A.findIndex((al,j)=>!(G.bd[pid]&&G.bd[pid]["k"+j]!==undefined)&&!hintSlots.includes(j));if(i<0)return;hintSlots.push(i);hintsLeft--;render()};
+ if(g("ht"))g("ht").onclick=()=>{if(hintsLeft<=0||hintSlots.length>0)return;const A=curQ().a,i=A.findIndex((al,j)=>!(G.bd[pid]&&G.bd[pid]["k"+j]!==undefined)&&!hintSlots.includes(j));if(i<0)return;hintSlots.push(i);hintsLeft--;render()};
  $.querySelectorAll("[data-pl]").forEach(b=>b.onclick=()=>{if(amHost()&&b.dataset.pl!==pid){sel=b.dataset.pl;render()}});
  if(g("tl"))g("tl").onclick=()=>{G.ld=sel;sel=null;G.seq++;pub();render()};
  if(g("kk"))g("kk").onclick=()=>{const id=sel;sel=null;base.child("k/"+id).set(true);base.child("p/"+id).remove();render()};
  if(g("cl"))g("cl").onclick=()=>{sel=null;render()};
- if(g("ag"))g("ag").onclick=()=>{G={...G0(),ld:G.ld,seq:G.seq+1,rs:G.rs,sn:G.sn};pub()};
+ if(g("ag"))g("ag").onclick=()=>{G={...G0(),ld:G.ld,used:G.used,seq:G.seq+1,rs:G.rs,sn:G.sn};pub()};
  const openAv=()=>{avD=parseAv(myAv);avOpen=true;avCat="h";render()};
  if(g("avh"))g("avh").onclick=openAv;
  if(g("avb"))g("avb").onclick=openAv;
@@ -367,6 +480,7 @@ function bind(){
  if(g("cpc"))g("cpc").onclick=async()=>note(await copyTxt(code)?"تم نسخ الكود":"تعذر النسخ");
  if(g("inv"))g("inv").onclick=async()=>note(await copyTxt(roomLink())?"تم نسخ رابط الغرفة":"تعذر النسخ");
  if(g("shr"))g("shr").onclick=async()=>{const t="تعال العب معي نفس الموجة! كود الغرفة: "+code;if(navigator.share&&isWeb()&&/Android|iPhone|iPad/i.test(navigator.userAgent)){try{await navigator.share({title:"نفس الموجة",text:t,url:roomLink()});return}catch(e){if(e&&e.name==="AbortError")return}}note(await copyTxt(t+"\n"+roomLink())?"تم نسخ رابط الدعوة":"تعذر النسخ")};
+ if(g("upd"))g("upd").onclick=()=>location.replace(location.pathname+"?"+(code?"r="+code+"&":"")+"v="+Date.now());
  if(g("lv"))g("lv").onclick=leave;
 }
 setInterval(()=>{
@@ -375,8 +489,14 @@ setInterval(()=>{
  const c=document.getElementById("cd3");if(c&&G.ph==="ld")c.textContent=Math.max(1,3-Math.floor(el/1000));
 },1000);
 try{nick=localStorage.getItem("nick")||""}catch(e){}
+if(window.visualViewport)visualViewport.addEventListener("resize",()=>document.body.classList.toggle("kb",visualViewport.height<screen.height*.72));
+document.addEventListener("focusin",e=>{if(e.target&&e.target.id==="a")setTimeout(()=>window.scrollTo({top:0}),350)});
 if(configured){try{firebase.initializeApp(FIREBASE_CONFIG);db=firebase.database();db.ref(".info/connected").on("value",s=>{if(s.val()&&R&&base){const me=base.child("p/"+pid);me.onDisconnect().remove();me.set(myS)}})}catch(e){notice="تعذر الاتصال بـ Firebase"}}else notice="لازم تلصق إعدادات Firebase داخل الملف أول";
+async function checkUpdate(){try{if(!isWeb())return;const r=await fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}),m=(await r.text()).match(/const VER="([^"]+)"/);if(m&&m[1]!==VER&&!sessionStorage.getItem("upd"+m[1])){sessionStorage.setItem("upd"+m[1],"1");location.replace(location.pathname+"?"+(pending?"r="+pending+"&":"")+"v="+m[1])}}catch(e){}}
 render();
+checkUpdate();
+addEventListener("hashchange",()=>{const c=dig(location.hash);if(c.length>=4&&!R){pending=c;render()}});
+if(pending&&nick&&db)setTimeout(()=>{if(!R)enter(pending,false)},500);
 </script>
 </body>
 </html>
