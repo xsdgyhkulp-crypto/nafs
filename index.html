@@ -244,7 +244,7 @@ const RAW=`أكلة شعبية خليجية؟|كبسة/كبسه/مجبوس,من�
 بلد خليجي؟|السعودية,الامارات,الكويت,قطر,عمان,البحرين`.trim().split("\n");
 const parseQ=l=>{const[q,a]=l.split("|");return{q,a:a.split(",").map(x=>x.split("/"))}};
 const BANK=RAW.map(parseQ);
-const VER="20261118a";
+const VER="20261118b";
 const PTS=[40,30,20,15,10,5],SECS=60,TRIES=5,HINTS=3,ROUNDS=5,MAX=20;
 const lev=(a,b)=>{const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i]);for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n]};
 function match(k,A,bd){if(!k)return -1;const tk=k.split(" ");for(let i=0;i<A.length;i++){if(bd[i])continue;for(const x of A[i]){const y=norm(x);if(k===y||tk.includes(y)||(y.length>=4&&k.length>=4&&lev(k,y)<=1))return i}}return -1}
@@ -277,7 +277,7 @@ const nameOf=id=>{const p=players().find(x=>x.peer===id);return p?p.presence.n:n
 const pub=()=>{if(base){G.ver=VER;return base.child("g").set(G)}};
 const normG=g=>({qd:g.qd||[],ver:g.ver||"",used:g.used||[],ph:g.ph,r:g.r||0,qs:g.qs||[],tot:g.tot||{},rounds:g.rounds||ROUNDS,seq:g.seq||0,rs:g.rs||0,bd:g.bd||{},att:g.att||{},sn:g.sn||{},ev:g.ev||{n:0},ld:g.ld||""});
 const tries=id=>G.att[id]??TRIES;
-const curQ=()=>{const l=(G.qd||[])[G.r];return l?parseQ(l):null};
+const curQ=()=>{const l=(G.qd||[])[G.r];if(l)return parseQ(l);return BANK[(G.qs||[])[G.r]]||null};
 const nA=()=>((curQ()||{a:[]}).a.length)||6;
 const found=id=>Object.keys(G.bd[id]||{}).length;
 const done=()=>{const pl=players();return pl.length>0&&pl.every(p=>tries(p.peer)<=0||found(p.peer)>=nA())};
@@ -318,7 +318,7 @@ async function enter(c,create){
   else if((await db.ref("rooms/"+c+"/k/"+pid).get()).exists()){notice="تم طردك من هالغرفة";return render()}
   if(!create&&!(await db.ref("rooms/"+c+"/p").get()).exists()){notice="ما لقيت غرفة بهالكود، تأكد من الرابط أو الكود";return render()}
   code=c;pending="";try{history.replaceState(null,"",location.pathname)}catch(e){}base=db.ref("rooms/"+c);isCreator=create;joinedAt=create?0:Date.now();primed=false;lastEv=null;lastPh="";sel=null;G=G0();if(create)G.ld=pid;
-  myS={n:nick.slice(0,14),e:myAv,t:joinedAt,a:"",s:0,rd:-1,rs:0,ts:0};
+  myS={n:nick.slice(0,14),e:myAv,t:joinedAt,a:"",s:0,rd:-1,rs:0,ts:0,v:VER};
   const me=base.child("p/"+pid);me.onDisconnect().remove();await me.set(myS);
   R={presence:p=>{myS={...myS,...p};P[pid]=myS;return me.update(p)},leave:()=>{base.off();me.remove()}};
   base.on("value",snap=>{const v=snap.val()||{};P=v.p||{};if(v.k&&v.k[pid]){notice="تم طردك من الغرفة";return leave()}if(v.g&&!amHost())G=normG(v.g);onPeers()});
@@ -409,7 +409,7 @@ function lobby(){
  ${pending?`<button class="bigb" id="jp">انضم<br>${pending}</button>`:`<button class="bigb" id="mk">أنشئ<br>غرفة</button>`}
  ${pending?`<button class="sm sec" id="mk" style="display:block;margin:0 auto">أو أنشئ غرفة جديدة</button>`:""}<div class="row" style="${pending?"display:none;":""}align-items:center;justify-content:center;gap:14px"><input id="cd" maxlength="6" inputmode="numeric" placeholder="كود الغرفة" value="${pending}" style="text-align:center;max-width:190px"><button class="dia" id="jn"><span>انضم</span></button></div>
  ${notice?`<p class="center" style="color:#ff6b81;font-weight:700">${esc(notice)}</p>`:""}</div>
- <p class="mut center">حتى ${MAX} لاعب في الغرفة، وكل واحد يلعب من جواله.</p>`;
+ <p class="mut center">حتى ${MAX} لاعب في الغرفة، وكل واحد يلعب من جواله.</p><p class="mut center" style="font-size:.72rem">الإصدار ${VER}</p>`;
 }
 const mask=x=>[...x].map((c,k)=>k%2===0||c===" "?c:"_").join("");
 function slots(rev){
@@ -428,6 +428,12 @@ function panel(){
  return `<div class="card center"><div class="big">${esc(p.presence.n)}</div><div class="row"><button id="tl">نقل القيادة</button><button class="sec" id="kk" style="color:#ff6b81;border-color:#ff6b81">طرد من الغرفة</button></div><button class="sm sec" id="cl">إغلاق</button></div>`;
 }
 const ORD=["الأول","الثاني","الثالث","الرابع","الخامس","السادس","السابع","الثامن","التاسع","العاشر"];
+function verWarn(){
+ const pl=players(),ld=pl.find(p=>p.peer===ldr()),old=pl.filter(p=>p.presence.v!==VER);
+ if(!old.length)return "";
+ if(amHost())return `<div class="upd">⚠ ${old.map(p=>esc(p.presence.n)).join("، ")}: نسخة اللعبة عنده قديمة. خله يفتح الرابط من جديد (أو يمسح بيانات الموقع) عشان يشتغل معك صح</div>`;
+ return ld&&ld.presence.v!==VER?`<div class="upd">⚠ القائد يستخدم نسخة قديمة. اطلب منه يحدّث اللعبة</div>`:"";
+}
 function roomView(){
  const pl=players(),me=meP(),host=amHost();
  if(R&&!me){const n=Object.values(P).filter(v=>v&&v.n).length;return n>MAX?`<div class="card center"><div class="big">الغرفة ممتلئة</div><p class="mut">الحد الأقصى ${MAX} لاعب.</p><button id="lv">رجوع</button></div>`:`<div class="card center"><div class="sp"></div><p class="mut">جاري الاتصال…</p></div>`}
@@ -455,7 +461,7 @@ function roomView(){
   ${rk.length>3?`<div class="card">${rk.slice(3).map((p,i)=>`<div class="lb"><span>${i+4}. ${esc(p.presence.n)}</span><span>${G.tot[p.peer]||0} نقطة</span></div>`).join("")}</div>`:""}
   ${host?'<button id="ag">لعبة جديدة</button>':'<p class="center mut">بانتظار القائد…</p>'}`;
  }
- return (G.ph==="lobby"?head:"")+panel()+body+`<div style="height:14px"></div><button class="sec" id="lv">خروج من الغرفة</button>`;
+ return verWarn()+(G.ph==="lobby"?head:"")+panel()+body+`<div style="height:14px"></div><button class="sec" id="lv">خروج من الغرفة</button><p class="mut center" style="font-size:.72rem;margin-top:10px">الإصدار ${VER}</p>`;
 }
 function bind(){
  const g=id=>document.getElementById(id);
@@ -495,6 +501,7 @@ if(configured){try{firebase.initializeApp(FIREBASE_CONFIG);db=firebase.database(
 async function checkUpdate(){try{if(!isWeb())return;const r=await fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}),m=(await r.text()).match(/const VER="([^"]+)"/);if(m&&m[1]!==VER&&!sessionStorage.getItem("upd"+m[1])){sessionStorage.setItem("upd"+m[1],"1");location.replace(location.pathname+"?"+(pending?"r="+pending+"&":"")+"v="+m[1])}}catch(e){}}
 render();
 checkUpdate();
+try{if(isWeb()&&"serviceWorker" in navigator)navigator.serviceWorker.register("sw.js")}catch(e){}
 addEventListener("hashchange",()=>{const c=dig(location.hash);if(c.length>=4&&!R){pending=c;render()}});
 if(pending&&nick&&db)setTimeout(()=>{if(!R)enter(pending,false)},500);
 </script>
