@@ -244,7 +244,7 @@ const RAW=`أكلة شعبية خليجية؟|كبسة/كبسه/مجبوس,من�
 بلد خليجي؟|السعودية,الامارات,الكويت,قطر,عمان,البحرين`.trim().split("\n");
 const parseQ=l=>{const[q,a]=l.split("|");return{q,a:a.split(",").map(x=>x.split("/"))}};
 const BANK=RAW.map(parseQ);
-const VER="20261118b";
+const VER="20261118c";
 const PTS=[40,30,20,15,10,5],SECS=60,TRIES=5,HINTS=3,ROUNDS=5,MAX=20;
 const lev=(a,b)=>{const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i]);for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n]};
 function match(k,A,bd){if(!k)return -1;const tk=k.split(" ");for(let i=0;i<A.length;i++){if(bd[i])continue;for(const x of A[i]){const y=norm(x);if(k===y||tk.includes(y)||(y.length>=4&&k.length>=4&&lev(k,y)<=1))return i}}return -1}
@@ -303,7 +303,7 @@ function onPeers(){
   if(G.ph==="rev"&&!revTimer)revTimer=setTimeout(()=>{revTimer=null;if(amHost()&&G.ph==="rev")nextRound()},7000);
  }else{clearTimeout(hostTimer);hostTimer=null;clearTimeout(ldTimer);ldTimer=null;clearTimeout(revTimer);revTimer=null}
  if(G.rs!==lastRs){lastRs=G.rs;localStart=Date.now();hintSlots=[];if(G.ph==="ld"&&G.r===0)hintsLeft=HINTS;if(G.ph==="ask"&&primed)snd("start")}
- if(G.ev&&G.ev.n!==lastEv){const e=G.ev;if(primed&&lastEv!==null)snd(e.by===pid?(e.k==="ok"?"win":"bad"):(e.k==="ok"?"ding":"soft"));lastEv=e.n}
+ if(G.ev&&G.ev.n!==lastEv){const e=G.ev;if(primed&&lastEv!==null){if(e.by===pid)snd(e.k==="ok"?"win":"bad")};lastEv=e.n}
  if(G.ph==="ask"&&primed&&found(pid)>=nA()&&celebRs!==G.rs){celebRs=G.rs;const pts=Object.values(G.bd[pid]||{}).reduce((a,b)=>a+b,0);showCeleb(pts);setTimeout(()=>snd("fan"),350)}
  if(G.ph!==lastPh){if(primed){if(G.ph==="rev")snd("end");if(G.ph==="end")snd("fan")}lastPh=G.ph}
  pl.forEach(p=>{const n=p.presence.rs|0;if(n>(seenRx[p.peer]|0)){seenRx[p.peer]=n;if(primed&&!p.isMe){toast=p.presence.n+" "+p.presence.rx;snd("pop");setTimeout(()=>{toast="";render()},2500)}}});
