@@ -401,7 +401,7 @@ const XRAW=`أكلة شعبية خليجية؟|مرقوق,قرصان,سليق,ث
 const XM={};XRAW.split("\n").forEach(l=>{const i=l.indexOf("|");XM[l.slice(0,i)]=l.slice(i+1)});
 const parseQ=l=>{const[q,a]=l.split("|"),x=XM[q],A=a.split(",").map(z=>z.split("/")),bs=new Set(A.flat().map(norm));return{q,a:A,x:x?x.split(",").map(z=>z.split("/")).filter(z=>!z.some(w=>bs.has(norm(w)))):[]}};
 const BANK=RAW.map(parseQ);
-const VER="20261121c";
+const VER="20261122c";
 const PTS=[40,30,20,15,10,5],SECS=60,TRIES=5,HINTS=3,ROUNDS=5,MAX=20;
 const lev=(a,b)=>{const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i]);for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n]};
 const SYN=`زواج,عرس,فرح,زفاف,زفه,ملجه,حفل زواج,حفله زواج,حفل عرس,ملكه
@@ -589,7 +589,7 @@ const configured=!Object.values(FIREBASE_CONFIG).some(v=>String(v).includes("PAS
 const CH="abcdefghjkmnpqrstuvwxyz23456789";
 const mkId=()=>Math.random().toString(36).slice(2,10);
 let db=null,R=null,base=null,pid=(()=>{try{let v=sessionStorage.getItem("pid");if(!v){v=mkId();sessionStorage.setItem("pid",v)}return v}catch(e){return mkId()}})(),P={},view="lobby",code="",nick="",isCreator=false,joinedAt=0,notice="",hostTimer=null,ldTimer=null,localStart=0,lastRs=-1,lastEv=null,mySeq=0,rxN=0,seenRx={},primed=false,toast="",hintsLeft=HINTS,hintSlots=[],lastPh="",sel=null,myS={};
-const G0=()=>({qd:[],ver:VER,used:[],ph:"lobby",r:0,qs:[],tot:{},rounds:ROUNDS,seq:0,rs:0,bd:{},att:{},sn:{},ev:{n:0},ld:""});
+const G0=()=>({nm:{},qd:[],ver:VER,used:[],ph:"lobby",r:0,qs:[],tot:{},rounds:ROUNDS,seq:0,rs:0,bd:{},att:{},sn:{},ev:{n:0},ld:""});
 let G=G0();
 const newCode=()=>String(10000+Math.floor(Math.random()*90000));
 const dig=t=>String(t||"").replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/\D/g,"");
@@ -600,7 +600,7 @@ const ldr=()=>{const pl=players();return pl.some(p=>p.peer===G.ld)?G.ld:(pl[0]?p
 const amHost=()=>ldr()===pid&&!!meP();
 const nameOf=id=>{const p=players().find(x=>x.peer===id);return p?p.presence.n:null};
 const pub=()=>{if(base){G.ver=VER;return base.child("g").set(G)}};
-const normG=g=>({qd:g.qd||[],ver:g.ver||"",used:g.used||[],ph:g.ph,r:g.r||0,qs:g.qs||[],tot:g.tot||{},rounds:g.rounds||ROUNDS,seq:g.seq||0,rs:g.rs||0,bd:g.bd||{},att:g.att||{},sn:g.sn||{},ev:g.ev||{n:0},ld:g.ld||""});
+const normG=g=>({nm:g.nm||{},qd:g.qd||[],ver:g.ver||"",used:g.used||[],ph:g.ph,r:g.r||0,qs:g.qs||[],tot:g.tot||{},rounds:g.rounds||ROUNDS,seq:g.seq||0,rs:g.rs||0,bd:g.bd||{},att:g.att||{},sn:g.sn||{},ev:g.ev||{n:0},ld:g.ld||""});
 const tries=id=>G.att[id]??TRIES;
 const curQ=()=>{const l=(G.qd||[])[G.r];if(l)return parseQ(l);return BANK[(G.qs||[])[G.r]]||null};
 const nA=()=>((curQ()||{a:[]}).a.length)||6;
@@ -620,23 +620,32 @@ function handle(){
   const i=match(k,A,have);
   if(i>=0){mine["k"+i]=PTS[i];G.tot[p.peer]=(G.tot[p.peer]||0)+PTS[i];G.ev={...ev("ok"),i}}
   else if(match(k,A,{})>=0)G.ev=ev("dup");
-  else{const xi=match(k,Q.x||[],usedX);
-   if(xi>=0){mine["x"+xi]=5;G.tot[p.peer]=(G.tot[p.peer]||0)+5;G.ev=ev("ex")}
-   else if(match(k,Q.x||[],{})>=0)G.ev=ev("dup");
-   else{G.att[p.peer]=a-1;G.ev=ev("no")}}});
+  else if(match(k,Q.x||[],{})>=0)G.ev=ev("ex");
+  else{G.att[p.peer]=a-1;G.ev=ev("no")}});
  if(done())endRound();else{G.seq++;pub()}
+}
+function restoreScores(){
+ if(!amHost()||G.ph==="lobby")return;
+ const pl=players(),here=new Set(pl.map(p=>p.peer));let ch=false;
+ pl.forEach(p=>{const n=p.presence.n;
+  if(!(p.peer in G.tot)){
+   const old=Object.keys(G.nm).find(q=>!here.has(q)&&G.nm[q]===n&&(q in G.tot));
+   if(old){G.tot[p.peer]=G.tot[old];delete G.tot[old];if(G.bd[old]){G.bd[p.peer]=G.bd[old];delete G.bd[old]}if(old in G.att){G.att[p.peer]=G.att[old];delete G.att[old]}delete G.nm[old];ch=true}}
+  if(G.nm[p.peer]!==n){G.nm[p.peer]=n;ch=true}});
+ if(ch){G.seq++;pub()}
 }
 function onPeers(){
  const pl=players();
  if(amHost()){
+  restoreScores();
   if(G.ph==="ask"){if(!hostTimer)armTimer();if(curQ())handle()}
   if(G.ph==="ld"&&!ldTimer)ldTimer=setTimeout(()=>{ldTimer=null;if(amHost()&&G.ph==="ld")startRound()},3500);
   if(G.ph==="rev"&&!revTimer)revTimer=setTimeout(()=>{revTimer=null;if(amHost()&&G.ph==="rev")nextRound()},7000);
  }else{clearTimeout(hostTimer);hostTimer=null;clearTimeout(ldTimer);ldTimer=null;clearTimeout(revTimer);revTimer=null}
  if(G.rs!==lastRs){lastRs=G.rs;localStart=Date.now();hintSlots=[];if(G.ph==="ld"&&G.r===0)hintsLeft=HINTS;if(G.ph==="ask"&&primed)snd("start")}
- if(G.ev&&G.ev.n!==lastEv){const e=G.ev;if(primed&&lastEv!==null){if(e.by===pid){if(e.k==="ok")snd("win");else if(e.k==="no")snd("bad");else if(e.k==="ex"){snd("ding");note("جواب صحيح ✓ +5")}else if(e.k==="dup")note("هذا الجواب انكشف لك قبل")}};lastEv=e.n}
+ if(G.ev&&G.ev.n!==lastEv){const e=G.ev;if(primed&&lastEv!==null){if(e.by===pid){if(e.k==="ok")snd("win");else if(e.k==="no")snd("bad");else if(e.k==="dup")note("هذا الجواب انكشف لك قبل")}};lastEv=e.n}
  if(G.ph==="ask"&&primed&&found(pid)>=nA()&&celebRs!==G.rs){celebRs=G.rs;const pts=Object.values(G.bd[pid]||{}).reduce((a,b)=>a+b,0);showCeleb(pts);setTimeout(()=>snd("fan"),350)}
- if(G.ph!==lastPh){if(primed){if(G.ph==="rev")snd("end");if(G.ph==="end")snd("fan")}lastPh=G.ph}
+ if(G.ph!==lastPh)lastPh=G.ph
  pl.forEach(p=>{const n=p.presence.rs|0;if(n>(seenRx[p.peer]|0)){seenRx[p.peer]=n;if(primed&&!p.isMe){toast=p.presence.n+" "+p.presence.rx;snd("pop");setTimeout(()=>{toast="";render()},2500)}}});
  primed=true;render();
 }
@@ -740,18 +749,18 @@ function lobby(){
  ${pending?`<button class="bigb" id="jp">انضم<br>${pending}</button>`:`<button class="bigb" id="mk">أنشئ<br>غرفة</button>`}
  ${pending?`<button class="sm sec" id="mk" style="display:block;margin:0 auto">أو أنشئ غرفة جديدة</button>`:""}<div class="row" style="${pending?"display:none;":""}align-items:center;justify-content:center;gap:14px"><input id="cd" maxlength="6" inputmode="numeric" placeholder="كود الغرفة" value="${pending}" style="text-align:center;max-width:190px"><button class="dia" id="jn"><span>انضم</span></button></div>
  ${notice?`<p class="center" style="color:#ff6b81;font-weight:700">${esc(notice)}</p>`:""}</div>
- <p class="mut center">حتى ${MAX} لاعب في الغرفة، وكل واحد يلعب من جواله.</p><p class="mut center" style="font-size:.72rem">الإصدار ${VER} · <span id="upd2" style="text-decoration:underline;cursor:pointer">تحديث الآن</span></p>`;
+ <p class="mut center">حتى ${MAX} لاعب في الغرفة، وكل واحد يلعب من جواله.</p><p class="mut center" style="font-size:.72rem">الإصدار ${VER}</p>`;
 }
 const mask=x=>[...x].map((c,k)=>k%2===0||c===" "?c:"_").join("");
 function slots(rev){
  const A=curQ().a,mine=G.bd[pid]||{};
  return `<div class="bd">${A.map((al,i)=>{const b=mine["k"+i];return b!==undefined?`<div class="sl on"><small>${b}</small>${esc(al[0])}</div>`:rev?`<div class="sl miss"><small>${PTS[i]}</small>${esc(al[0])}</div>`:hintSlots.includes(i)?`<div class="sl hint">${esc(mask(al[0]))}</div>`:`<div class="sl"><span class="nm">${i+1}</span></div>`}).join("")}</div>`;
 }
-const topIds=()=>{const pl=players(),m=Math.max(0,...pl.map(p=>G.tot[p.peer]||0));return m>0?pl.filter(p=>(G.tot[p.peer]||0)===m).map(p=>p.peer):[]};
+const topIds=()=>{const pl=players(),m=Math.max(0,...pl.map(p=>G.tot[p.peer]||0));const t=m>0?pl.filter(p=>(G.tot[p.peer]||0)===m).map(p=>p.peer):[];return t.length===1?t:[]};
 const hue=n=>[...n].reduce((a,c)=>a+c.charCodeAt(0),0)%360;
 const circ=(n,c,e)=>parseAv(e)?`<span class="ci ${c||""}" style="background:none">${avs(e)}</span>`:`<span class="ci ${c||""}" style="background:linear-gradient(135deg,hsl(${hue(n)} 75% 60%),hsl(${(hue(n)+50)%360} 70% 40%))">${esc([...n][0]||"")}</span>`;
 function av(p,pts,tops){const n=p.presence.n;return `<button class="av" data-pl="${p.peer}">${tops.includes(p.peer)?'<span class="cr">👑</span>':""}${circ(n,"",p.presence.e)}<span class="an">${esc(n)}${p.isMe?" (أنت)":""}</span>${pts?`<span class="pt">${G.tot[p.peer]||0} pt</span>`:""}${p.peer===ldr()?'<span class="ldt">قائد</span>':""}</button>`}
-const row=(pl,pts)=>{const t=pts?topIds():[ldr()];return `<div class="pr">${pl.map(p=>av(p,pts,t)).join("")}</div>`};
+const row=(pl,pts)=>{const t=[ldr()];return `<div class="pr">${pl.map(p=>av(p,pts,t)).join("")}</div>`};
 const hearts=t=>Array.from({length:TRIES},(_,i)=>`<span class="ht ${i<t?"":"off"}">♥</span>`).join("");
 function panel(){
  if(!sel||!amHost()||sel===pid)return "";
@@ -786,13 +795,13 @@ function roomView(){
  }else if(G.ph==="rev"){
   body=`<div class="qbox"><span class="rd">نتيجة الجولة ${G.r+1}</span>${esc(curQ().q)}</div>${slots(true)}${row(pl,true)}<p class="center mut">${G.r+1>=G.rounds?"النتيجة النهائية بعد قليل…":"الجولة الجاية بعد قليل…"}</p>`;
  }else{
-  const rk=pl.slice().sort((a,b)=>(G.tot[b.peer]||0)-(G.tot[a.peer]||0)),mr=rk.findIndex(p=>p.isMe)+1;
+  const rk=pl.slice().sort((a,b)=>(G.tot[b.peer]||0)-(G.tot[a.peer]||0)),mr=rk.findIndex(p=>p.isMe)+1,uniq=rk.length<2||(G.tot[rk[0].peer]||0)>(G.tot[rk[1].peer]||0);
   body=`<div class="card center">${me?circ(me.presence.n,"lg",me.presence.e):""}<div class="rk">المركز ${ORD[mr-1]||mr}</div></div>
-  <div class="pod">${rk.slice(0,3).map((p,i)=>`<div class="pc ${i===0?"first":""}">${i===0?'<span class="cr">👑</span>':""}<span class="bdg">${i+1}</span>${circ(p.presence.n,"",p.presence.e)}<span class="an">${esc(p.presence.n)}</span><span class="pt">${G.tot[p.peer]||0} نقطة</span></div>`).join("")}</div>
+  <div class="pod">${rk.slice(0,3).map((p,i)=>`<div class="pc ${i===0?"first":""}">${p.peer===ldr()?'<span class="cr">👑</span>':""}<span class="bdg">${i+1}</span>${circ(p.presence.n,"",p.presence.e)}<span class="an">${esc(p.presence.n)}</span><span class="pt">${G.tot[p.peer]||0} نقطة</span></div>`).join("")}</div>
   ${rk.length>3?`<div class="card">${rk.slice(3).map((p,i)=>`<div class="lb"><span>${i+4}. ${esc(p.presence.n)}</span><span>${G.tot[p.peer]||0} نقطة</span></div>`).join("")}</div>`:""}
   ${host?'<button id="ag">لعبة جديدة</button>':'<p class="center mut">بانتظار القائد…</p>'}`;
  }
- return verWarn()+(G.ph==="lobby"?head:"")+panel()+body+`<div style="height:14px"></div><button class="sec" id="lv">خروج من الغرفة</button><p class="mut center" style="font-size:.72rem;margin-top:10px">الإصدار ${VER} · <span id="upd2" style="text-decoration:underline;cursor:pointer">تحديث الآن</span></p>`;
+ return verWarn()+(G.ph==="lobby"?head:"")+panel()+body+`<div style="height:14px"></div><button class="sec" id="lv">خروج من الغرفة</button><p class="mut center" style="font-size:.72rem;margin-top:10px">الإصدار ${VER}</p>`;
 }
 function bind(){
  const g=id=>document.getElementById(id);
