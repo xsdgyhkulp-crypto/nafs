@@ -401,7 +401,7 @@ const XRAW=`أكلة شعبية خليجية؟|مرقوق,قرصان,سليق,ث
 const XM={};XRAW.split("\n").forEach(l=>{const i=l.indexOf("|");XM[l.slice(0,i)]=l.slice(i+1)});
 const parseQ=l=>{const[q,a]=l.split("|"),x=XM[q],A=a.split(",").map(z=>z.split("/")),bs=new Set(A.flat().map(norm));return{q,a:A,x:x?x.split(",").map(z=>z.split("/")).filter(z=>!z.some(w=>bs.has(norm(w)))):[]}};
 const BANK=RAW.map(parseQ);
-const VER="20261122c";
+const VER="20261124a";
 const PTS=[40,30,20,15,10,5],SECS=60,TRIES=5,HINTS=3,ROUNDS=5,MAX=20;
 const lev=(a,b)=>{const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i]);for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n]};
 const SYN=`زواج,عرس,فرح,زفاف,زفه,ملجه,حفل زواج,حفله زواج,حفل عرس,ملكه
@@ -651,6 +651,7 @@ function onPeers(){
 }
 async function enter(c,create){
  nick=document.getElementById("nm").value.trim();try{localStorage.setItem("nick",nick)}catch(e){}
+ autoAv();
  if(!nick){notice="اكتب اسمك أول";return render()}
  if(!db){notice="إعدادات Firebase ناقصة في الملف";return render()}
  try{
@@ -685,47 +686,75 @@ function render(){
  let T=document.getElementById("tst");
  if(toast){if(!T){T=document.createElement("div");T.id="tst";T.className="toast";document.body.appendChild(T)}T.textContent=toast}else if(T)T.remove();
 }
-const AK=["g","sk","h","ey","mo","ex","bg"],AN={g:2,sk:5,h:7,ey:4,mo:3,ex:4,bg:8};
-const parseAv=c=>/^\d{7}$/.test(c||"")?Object.fromEntries(AK.map((k,i)=>[k,+c[i]])):null;
-const serAv=o=>AK.map(k=>o[k]).join("");
-const rndAv=()=>{const o=Object.fromEntries(AK.map(k=>[k,Math.floor(Math.random()*AN[k])]));return serAv(o)};
-let myAv=(()=>{try{const v=localStorage.getItem("avc");if(parseAv(v))return v}catch(e){}return rndAv()})();
+const ENC=["g","sk","h","ey","mo","ex","bg","cl"],TABS=["g","sk","h","ey","mo","ex","cl","bg"];
+const AN={g:2,sk:7,ey:6,mo:5,ex:6,cl:7,bg:12};
+const cnt=(k,o)=>k==="h"?HAIR[o.g].length:AN[k];
+const parseAv=c=>{if(!/^[0-9a-z]{7,8}$/.test(c||""))return null;const o={};ENC.forEach((k,i)=>{let v=parseInt(c[i]||"0",36);o[k]=v<cnt(k,o)?v:0});return o};
+const serAv=o=>ENC.map(k=>(o[k]|0).toString(36)).join("");
+const rndAv=g=>{const o={g:g===undefined?Math.floor(Math.random()*2):g};ENC.forEach(k=>{if(k!=="g")o[k]=Math.floor(Math.random()*cnt(k,o))});return serAv(o)};
+let avManual=false;try{avManual=localStorage.getItem("avm")==="1"}catch(e){}
 let avOpen=false,avD=null,avCat="h";
-const SK=["#ffd9b8","#f2bf96","#d9a066","#b87a4b","#8a5532"],BGC=["#7c3aed","#2563eb","#0d9488","#16a34a","#f59e0b","#e11d48","#db2777","#475569"];
+const SK=["#ffd9b8","#f2bf96","#d9a066","#b87a4b","#8a5532","#fde7d3","#6b3f26"],BGC=["#7c3aed","#2563eb","#0d9488","#16a34a","#f59e0b","#e11d48","#db2777","#475569","#0ea5e9","#84cc16","#f97316","#1e1b4b"];
+const SHIRT=["","#2563eb","#dc2626","#16a34a","#111827","#f59e0b","#db2777"];
 const HB="M26 44 Q24 18 50 18 Q76 18 74 44 Q64 30 50 30 Q36 30 26 44Z";
 const hj=c=>[`<path d="M17 54 Q14 10 50 10 Q86 10 83 54 Q84 82 66 88 L34 88 Q16 82 17 54Z" fill="${c}"/>`,`<path d="M27 40 Q50 20 73 40 Q50 29 27 40Z" fill="${c}"/>`];
+const IGAL=`<path d="M22 17 Q50 31 78 17" stroke="#161616" stroke-width="4.8" fill="none" stroke-linecap="round"/><path d="M23 24 Q50 38 77 24" stroke="#161616" stroke-width="4.8" fill="none" stroke-linecap="round"/><path d="M25 15.6 Q50 29.6 75 15.6 M26 22.6 Q50 36.6 74 22.6" stroke="#6a6a6a" stroke-width="1.1" fill="none" stroke-linecap="round" opacity=".7"/><circle cx="79" cy="18.5" r="3.3" fill="#161616"/><path d="M80 19.5 Q85.5 24 83 32" stroke="#161616" stroke-width="3.1" fill="none" stroke-linecap="round"/>`;
+const GH=f=>[`<path d="M19 52 Q16 12 50 12 Q84 12 81 52 L82 76 Q66 66 50 70 Q34 66 18 76Z" fill="${f}"/><path d="M26 30 Q22 52 24 70 M74 30 Q78 52 76 70" stroke="#00000022" stroke-width="1.4" fill="none"/>`,`<path d="M26 40 Q50 15 74 40 Q50 30 26 40Z" fill="${f}"/>${IGAL}`];
 const HAIR=[[
  ["",`<path d="M26 44 Q24 20 50 20 Q76 20 74 44 Q68 32 50 31 Q32 32 26 44Z" fill="#2a1a14"/>`],
  ["",`<path d="M26 42 L28 22 L38 30 L44 16 L52 28 L60 16 L64 30 L72 22 L74 42 Q66 32 50 32 Q34 32 26 42Z" fill="#2a1a14"/>`],
  ["",`<g fill="#2a1a14"><circle cx="32" cy="30" r="9"/><circle cx="44" cy="23" r="10"/><circle cx="57" cy="23" r="10"/><circle cx="68" cy="30" r="9"/><circle cx="28" cy="41" r="7"/><circle cx="72" cy="41" r="7"/></g>`],
  ["",`<path d="M25 40 Q26 15 50 15 Q74 15 75 40Z" fill="#e63946"/><rect x="21" y="38" width="58" height="6" rx="3" fill="#b4232f"/>`],
- [`<path d="M19 52 Q16 12 50 12 Q84 12 81 52 L82 74 Q66 64 50 68 Q34 64 18 74Z" fill="#f4f4f5"/>`,`<path d="M27 40 Q50 22 73 40 Q50 31 27 40Z" fill="#f4f4f5"/><ellipse cx="50" cy="24" rx="27" ry="5" fill="none" stroke="#111" stroke-width="4"/>`],
- [`<path d="M19 52 Q16 12 50 12 Q84 12 81 52 L82 74 Q66 64 50 68 Q34 64 18 74Z" fill="#d62839"/><path d="M19 52 Q16 12 50 12 Q84 12 81 52" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="3 4"/>`,`<path d="M27 40 Q50 22 73 40 Q50 31 27 40Z" fill="#d62839"/><ellipse cx="50" cy="24" rx="27" ry="5" fill="none" stroke="#111" stroke-width="4"/>`],
- ["",""]],[
+ GH("#f4f4f5"),
+ GH("url(#shm)"),
+ ["",""],
+ ["",`<path d="M27 40 Q27 22 50 21 Q73 22 73 40 Q66 31 50 31 Q34 31 27 40Z" fill="#3a2a22"/>`],
+ ["",`<path d="M26 42 Q24 18 52 17 Q80 20 74 44 Q71 29 54 27 Q36 27 26 42Z" fill="#2a1a14"/><path d="M40 21 Q54 17 66 24" stroke="#5b4034" stroke-width="2" fill="none"/>`],
+ [`<circle cx="50" cy="30" r="27" fill="#1f1410"/>`,`<path d="M27 42 Q50 24 73 42 Q50 32 27 42Z" fill="#1f1410"/>`],
+ ["",`<path d="M25 40 Q26 12 50 12 Q74 12 75 40Z" fill="#2563eb"/><rect x="23" y="35" width="54" height="8" rx="4" fill="#1d4ed8"/><circle cx="50" cy="10" r="5" fill="#93c5fd"/>`],
+ [`<path d="M16 72 Q12 16 50 12 Q88 16 84 72Z" fill="#475569"/>`,`<path d="M26 42 Q50 22 74 42 Q50 31 26 42Z" fill="#475569"/><path d="M40 70 L38 86 M60 70 L62 86" stroke="#e2e8f0" stroke-width="2"/>`]
+],[
  [`<path d="M22 46 Q18 12 50 12 Q82 12 78 46 L82 88 Q66 82 64 62 L36 62 Q34 82 18 88Z" fill="#3a1f2b"/>`,`<path d="M27 42 Q50 18 73 42 Q56 30 27 42Z" fill="#3a1f2b"/>`],
  [`<path d="M68 30 Q94 36 84 70 Q80 52 68 44Z" fill="#6b3a1f"/>`,`<path d="${HB}" fill="#6b3a1f"/><circle cx="71" cy="31" r="4" fill="#ff5d8f"/>`],
  [`<circle cx="50" cy="12" r="10" fill="#2a1a14"/>`,`<path d="${HB}" fill="#2a1a14"/>`],
  hj("#ff7eb6"),hj("#1f1b2e"),hj("#20c6b6"),
- ["",`<path d="${HB}" fill="#5b3a29"/><path d="M60 21 L76 13 L76 29Z M60 21 L44 13 L44 29Z" fill="#ff5d8f"/><circle cx="60" cy="21" r="4" fill="#e63977"/>`]]];
-const EXT=[["",`<path d="M33 56 Q50 80 67 56 Q50 70 33 56Z" fill="#2a1a14" opacity=".3"/>`,`<path d="M27 50 Q28 78 50 80 Q72 78 73 50 Q66 64 50 64 Q34 64 27 50Z" fill="#2a1a14"/>`,`<path d="M37 57 Q44 51 50 55 Q56 51 63 57 Q56 59 50 58 Q44 59 37 57Z" fill="#2a1a14"/>`],
-["",`<circle cx="33" cy="55" r="4.5" fill="#ff6b8a" opacity=".55"/><circle cx="67" cy="55" r="4.5" fill="#ff6b8a" opacity=".55"/>`,`<path d="M35 42 L32 39 M40 41 L40 37 M45 42 L48 39 M55 42 L52 39 M60 41 L60 37 M65 42 L68 39" stroke="#1b1b1b" stroke-width="2" stroke-linecap="round"/>`,`<g fill="#b8734a"><circle cx="38" cy="54" r="1.2"/><circle cx="43" cy="56" r="1.2"/><circle cx="57" cy="56" r="1.2"/><circle cx="62" cy="54" r="1.2"/></g>`]];
-const EYE=[`<circle cx="40" cy="46" r="3" fill="#1b1b1b"/><circle cx="60" cy="46" r="3" fill="#1b1b1b"/>`,`<path d="M36 47 Q40 41 44 47 M56 47 Q60 41 64 47" stroke="#1b1b1b" stroke-width="3" fill="none" stroke-linecap="round"/>`,`<rect x="33" y="41" width="15" height="9" rx="3" fill="#111"/><rect x="52" y="41" width="15" height="9" rx="3" fill="#111"/><rect x="48" y="44" width="4" height="2" fill="#111"/>`,`<circle cx="40" cy="46" r="5" fill="#1b1b1b"/><circle cx="60" cy="46" r="5" fill="#1b1b1b"/><circle cx="41.5" cy="44.5" r="1.8" fill="#fff"/><circle cx="61.5" cy="44.5" r="1.8" fill="#fff"/>`];
-const MOU=[`<path d="M42 57 Q50 65 58 57" stroke="#d6455d" stroke-width="3" fill="none" stroke-linecap="round"/>`,`<path d="M41 56 Q50 71 59 56Z" fill="#7a2e2e"/><path d="M45 61 Q50 65 55 61 Q50 63 45 61Z" fill="#ff8fa3"/>`,`<path d="M44 59 H56" stroke="#d6455d" stroke-width="3" stroke-linecap="round"/>`];
+ ["",`<path d="${HB}" fill="#5b3a29"/><path d="M60 21 L76 13 L76 29Z M60 21 L44 13 L44 29Z" fill="#ff5d8f"/><circle cx="60" cy="21" r="4" fill="#e63977"/>`],
+ [`<path d="M26 40 Q10 48 14 74 Q22 58 28 46Z M74 40 Q90 48 86 74 Q78 58 72 46Z" fill="#4a2b1a"/>`,`<path d="${HB}" fill="#4a2b1a"/><circle cx="25" cy="44" r="3.5" fill="#f59e0b"/><circle cx="75" cy="44" r="3.5" fill="#f59e0b"/>`],
+ [`<path d="M22 46 Q20 14 50 12 Q80 14 78 46 L78 64 Q64 68 62 56 L38 56 Q36 68 22 64Z" fill="#1f1410"/>`,`<path d="M27 38 Q50 22 73 38 L73 31 Q50 12 27 31Z" fill="#1f1410"/>`],
+ [`<g fill="#3a1f0f"><circle cx="22" cy="40" r="10"/><circle cx="19" cy="55" r="10"/><circle cx="23" cy="70" r="10"/><circle cx="78" cy="40" r="10"/><circle cx="81" cy="55" r="10"/><circle cx="77" cy="70" r="10"/><circle cx="36" cy="20" r="11"/><circle cx="50" cy="15" r="12"/><circle cx="64" cy="20" r="11"/></g>`,`<path d="M27 40 Q50 20 73 40 Q50 31 27 40Z" fill="#3a1f0f"/>`],
+ [`<path d="M22 46 Q18 12 50 12 Q82 12 78 46 L82 88 Q66 82 64 62 L36 62 Q34 82 18 88Z" fill="#5b3a29"/>`,`<path d="M27 42 Q50 20 73 42 Q56 30 27 42Z" fill="#5b3a29"/><path d="M26 40 Q50 22 74 40" stroke="#ff5d8f" stroke-width="5.5" fill="none" stroke-linecap="round"/>`],
+ hj("#f1f5f9"),hj("#1e3a8a"),hj("#e11d48")]];
+const EXT=[["",`<path d="M33 56 Q50 80 67 56 Q50 70 33 56Z" fill="#2a1a14" opacity=".3"/>`,`<path d="M27 50 Q28 79 50 81 Q72 79 73 50 Q68 69 58 68 Q50 70 42 68 Q32 69 27 50Z" fill="#2a1a14"/>`,`<path d="M37 56 Q44 50 50 54 Q56 50 63 56 Q56 57.5 50 56.5 Q44 57.5 37 56Z" fill="#2a1a14"/>`,`<path d="M43.5 67 Q50 78 56.5 67 Q50 70.5 43.5 67Z" fill="#2a1a14"/>`,`<path d="M37 56 Q44 50 50 54 Q56 50 63 56 Q56 57.5 50 56.5 Q44 57.5 37 56Z M43.5 67 Q50 78 56.5 67 Q50 70.5 43.5 67Z" fill="#2a1a14"/>`],
+["",`<circle cx="33" cy="55" r="4.5" fill="#ff6b8a" opacity=".55"/><circle cx="67" cy="55" r="4.5" fill="#ff6b8a" opacity=".55"/>`,`<path d="M35 42 L32 39 M40 41 L40 37 M45 42 L48 39 M55 42 L52 39 M60 41 L60 37 M65 42 L68 39" stroke="#1b1b1b" stroke-width="2" stroke-linecap="round"/>`,`<g fill="#b8734a"><circle cx="38" cy="54" r="1.2"/><circle cx="43" cy="56" r="1.2"/><circle cx="57" cy="56" r="1.2"/><circle cx="62" cy="54" r="1.2"/></g>`,`<circle cx="26" cy="54" r="3" fill="#fbbf24"/><circle cx="74" cy="54" r="3" fill="#fbbf24"/>`,`<g fill="#fff" opacity=".9"><path d="M32 54 l1.6 3.4 3.4 1.6 -3.4 1.6 -1.6 3.4 -1.6 -3.4 -3.4 -1.6 3.4 -1.6z"/><path d="M68 54 l1.6 3.4 3.4 1.6 -3.4 1.6 -1.6 3.4 -1.6 -3.4 -3.4 -1.6 3.4 -1.6z"/></g>`]];
+const EYE=[`<circle cx="40" cy="46" r="3" fill="#1b1b1b"/><circle cx="60" cy="46" r="3" fill="#1b1b1b"/>`,`<path d="M36 47 Q40 41 44 47 M56 47 Q60 41 64 47" stroke="#1b1b1b" stroke-width="3" fill="none" stroke-linecap="round"/>`,`<rect x="33" y="41" width="15" height="9" rx="3" fill="#111"/><rect x="52" y="41" width="15" height="9" rx="3" fill="#111"/><rect x="48" y="44" width="4" height="2" fill="#111"/>`,`<circle cx="40" cy="46" r="5" fill="#1b1b1b"/><circle cx="60" cy="46" r="5" fill="#1b1b1b"/><circle cx="41.5" cy="44.5" r="1.8" fill="#fff"/><circle cx="61.5" cy="44.5" r="1.8" fill="#fff"/>`,`<circle cx="40" cy="46" r="3" fill="#1b1b1b"/><path d="M56 47 Q60 41 64 47" stroke="#1b1b1b" stroke-width="3" fill="none" stroke-linecap="round"/>`,`<g fill="none" stroke="#1b1b1b" stroke-width="2.4"><circle cx="40" cy="46" r="7.5"/><circle cx="60" cy="46" r="7.5"/><path d="M47.5 46 H52.5"/></g><circle cx="40" cy="46" r="2.6" fill="#1b1b1b"/><circle cx="60" cy="46" r="2.6" fill="#1b1b1b"/>`];
+const MOU=[`<path d="M42.5 57.5 Q50 62.5 57.5 57.5" stroke="#a8434b" stroke-width="2.4" fill="none" stroke-linecap="round"/>`,
+`<path d="M41.5 56.5 Q50 58 58.5 56.5 Q56.5 66 50 66 Q43.5 66 41.5 56.5Z" fill="#5c1a20" stroke="#a8434b" stroke-width="1.4" stroke-linejoin="round"/><path d="M43.8 57.3 Q50 58.6 56.2 57.3 Q55.2 60.6 50 60.6 Q44.8 60.6 43.8 57.3Z" fill="#fff"/>`,
+`<path d="M44.5 59 H55.5" stroke="#a8434b" stroke-width="2.2" stroke-linecap="round"/>`,
+`<path d="M42.5 57.5 Q50 62.5 57.5 57.5" stroke="#a8434b" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M47 60.2 Q50 67.5 53 60.2Z" fill="#e8737c" stroke="#c75561" stroke-width=".8"/>`,
+`<ellipse cx="50" cy="60.5" rx="3.2" ry="4" fill="#5c1a20" stroke="#a8434b" stroke-width="1.3"/>`];
+const PAT=`<defs><pattern id="shm" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#fff"/><path d="M3 0.4 L5.6 3 L3 5.6 L0.4 3Z" fill="#d62839"/></pattern></defs>`;
+let myAv=(()=>{try{const v=localStorage.getItem("avc");if(parseAv(v))return v}catch(e){}return rndAv()})();
 function avs(code){
  const o=parseAv(code);if(!o)return "";
- const gi=o.g,sk=SK[o.sk],hr=HAIR[gi][o.h]||["",""],ear=gi===1&&o.h>=3&&o.h<=5?"":`<circle cx="26" cy="48" r="4" fill="${sk}"/><circle cx="74" cy="48" r="4" fill="${sk}"/>`;
- return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:100%"><rect width="100" height="100" fill="${BGC[o.bg]}"/><path d="M10 100 Q12 70 50 68 Q88 70 90 100Z" fill="${gi?"#4c3a7a":"#f4f4f5"}"/>${hr[0]}<rect x="43" y="60" width="14" height="14" fill="${sk}"/>${ear}<circle cx="50" cy="46" r="24" fill="${sk}"/>${EXT[gi][o.ex]}${EYE[o.ey]}${MOU[o.mo]}${hr[1]}</svg>`;
+ const gi=o.g,sk=SK[o.sk],hr=HAIR[gi][o.h]||["",""],ear=gi===1&&o.h>=3&&o.h<=5||gi===1&&o.h>=11?"":`<circle cx="26" cy="48" r="4" fill="${sk}"/><circle cx="74" cy="48" r="4" fill="${sk}"/>`;
+ const shirt=o.cl?SHIRT[o.cl]:gi?"#4c3a7a":"#f4f4f5";
+ return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:100%">${PAT}<rect width="100" height="100" fill="${BGC[o.bg]}"/><path d="M10 100 Q12 70 50 68 Q88 70 90 100Z" fill="${shirt}"/>${o.cl?`<path d="M40 69 L50 82 L60 69Z" fill="${sk}"/>`:""}${hr[0]}<rect x="43" y="60" width="14" height="14" fill="${sk}"/>${ear}<circle cx="50" cy="46" r="24" fill="${sk}"/>${EXT[gi][o.ex]}${EYE[o.ey]}${MOU[o.mo]}${hr[1]}</svg>`;
 }
-const AL={g:"الجنس",sk:"البشرة",h:"الشعر",ey:"العيون",mo:"الفم",bg:"الخلفية"};
+const AL={g:"الجنس",sk:"البشرة",h:"الشعر",ey:"العيون",mo:"الفم",cl:"الملابس",bg:"الخلفية"};
 const alab=k=>k==="ex"?(avD.g?"لمسات":"الذقن"):AL[k];
+const FN="فاطمة,نورة,سارة,مريم,عائشة,عايشة,خديجة,هند,ريم,لمى,جود,لينا,رهف,غادة,دانة,شهد,جوري,ليلى,امل,هيا,سلمى,اسماء,زينب,منى,نوف,ريما,الجوهرة,العنود,وجدان,رغد,رزان,تالا,ميار,جنى,اروى,حصة,لطيفة,منيرة,عبير,مها,رنا,رنيم,لجين,شروق,ملاك,هبة,شيخة,موزة,مي,ميس,ديما,دانا,دلال,بشاير,سلوى,سعاد,عهود,جميلة,امينة,رقية,ايمان,نجلاء,رحاب,رحمة,روان,رؤى,يارا,لارا,جنان,جواهر,غلا,الاء,ابتسام,سمر,نهى,ندى,وفاء,وعد,وضحى,اسراء,تهاني,ثريا,حنان,خلود,دعاء,رنين,ريماس,شذى,صفاء,عفاف,عزة,لولوة,مزنة,ميعاد,نادين,نادية,نجود,هدى,هديل,هيفاء,وسن,ياسمين,يمنى,يسرى,رشا,سجى,سندس,صبا,ضحى,علياء,فرح,فجر,كوثر,لانا,لميس,مروة,مشاعل,ملك,منار,نسيم,هاجر,هلا,هناء,ولاء,بتول,بسمة,بدور,تسنيم,حفصة,غدير,قمر,مرام,بنت,بنات,بنوتة,فتاة,انسة,اميرة,ملكة,برنسيسة".split(",");
+const MN="محمد,احمد,علي,عبدالله,خالد,فهد,سعود,سلطان,ناصر,نايف,بندر,تركي,فيصل,عبدالعزيز,عبدالرحمن,سعد,سلمان,ماجد,يوسف,ابراهيم,عمر,عثمان,حمد,حمزة,راشد,زايد,سالم,صالح,طلال,عادل,عامر,عبدالملك,عزيز,عصام,فواز,فارس,قاسم,كريم,مبارك,متعب,محسن,مشعل,منصور,مهند,مازن,نواف,هاني,وليد,ياسر,يزيد,ريان,رائد,رامي,رياض,زياد,سامي,سليمان,شهاب,صقر,طارق,ظافر,عبيد,عدنان,غازي,فراس,فايز,لؤي,مروان,معاذ,مصطفى,مهدي,نبيل,نزار,هشام,هزاع,وائل,باسل,بدر,بسام,تميم,جاسم,جابر,حسن,حسين,حمود,خليل,داود,ذياب,رشيد,رضا,سيف,شافي,شاكر,ضاري,عاصم,عباس,عقيل,غانم,ماهر,مالك,مرزوق,مساعد,مشاري,معن,نادر,ناجي,نمر,هادي,همام,ياسين,ولد,شاب,رجال,ملك,امير".split(",");
+const FS=new Set(FN.map(norm)),MS=new Set(MN.map(norm));
+const gGuess=n=>{const t=norm(String(n||"").trim().split(/\s+/)[0]);return FS.has(t)?1:MS.has(t)?0:null};
+function autoAv(){if(avManual)return;const g=gGuess(nick);if(g===null)return;const o=parseAv(myAv);if(o&&o.g===g)return;myAv=rndAv(g);try{localStorage.setItem("avc",myAv)}catch(e){}}
 function avEdit(){
- const cat=avCat,n=AN[cat];
+ const cat=avCat,n=cat==="h"?HAIR[avD.g].length:AN[cat];
  const item=v=>{const on=avD[cat]===v?"on":"";let inner;
   if(cat==="g")inner=`<b>${v?"بنت":"ولد"}</b>`;else if(cat==="sk")inner=`<span class="sw" style="background:${SK[v]}"></span>`;else if(cat==="bg")inner=`<span class="sw" style="background:${BGC[v]}"></span>`;else inner=`<span class="ci">${avs(serAv({...avD,[cat]:v}))}</span>`;
   return `<button class="it ${on}" data-ai="${v}">${inner}</button>`};
  return `<div class="center"><div class="logo" style="font-size:1.8rem">شخصيتك</div></div>
  <div class="card center"><span class="ci lg" style="width:130px;height:130px;margin:0 auto">${avs(serAv(avD))}</span></div>
- <div class="tabs">${AK.map(k=>`<button class="tab ${cat===k?"on":""}" data-ac="${k}">${alab(k)}</button>`).join("")}</div>
+ <div class="tabs">${TABS.map(k=>`<button class="tab ${cat===k?"on":""}" data-ac="${k}">${alab(k)}</button>`).join("")}</div>
  <div class="ig">${Array.from({length:n},(_,v)=>item(v)).join("")}</div>
  <div class="row" style="margin-top:16px"><button id="avok">تأكيد</button><button class="sec" id="avno">إلغاء</button></div>`;
 }
@@ -760,7 +789,7 @@ const topIds=()=>{const pl=players(),m=Math.max(0,...pl.map(p=>G.tot[p.peer]||0)
 const hue=n=>[...n].reduce((a,c)=>a+c.charCodeAt(0),0)%360;
 const circ=(n,c,e)=>parseAv(e)?`<span class="ci ${c||""}" style="background:none">${avs(e)}</span>`:`<span class="ci ${c||""}" style="background:linear-gradient(135deg,hsl(${hue(n)} 75% 60%),hsl(${(hue(n)+50)%360} 70% 40%))">${esc([...n][0]||"")}</span>`;
 function av(p,pts,tops){const n=p.presence.n;return `<button class="av" data-pl="${p.peer}">${tops.includes(p.peer)?'<span class="cr">👑</span>':""}${circ(n,"",p.presence.e)}<span class="an">${esc(n)}${p.isMe?" (أنت)":""}</span>${pts?`<span class="pt">${G.tot[p.peer]||0} pt</span>`:""}${p.peer===ldr()?'<span class="ldt">قائد</span>':""}</button>`}
-const row=(pl,pts)=>{const t=[ldr()];return `<div class="pr">${pl.map(p=>av(p,pts,t)).join("")}</div>`};
+const row=(pl,pts)=>{const t=pts?topIds():[ldr()];return `<div class="pr">${pl.map(p=>av(p,pts,t)).join("")}</div>`};
 const hearts=t=>Array.from({length:TRIES},(_,i)=>`<span class="ht ${i<t?"":"off"}">♥</span>`).join("");
 function panel(){
  if(!sel||!amHost()||sel===pid)return "";
@@ -797,7 +826,7 @@ function roomView(){
  }else{
   const rk=pl.slice().sort((a,b)=>(G.tot[b.peer]||0)-(G.tot[a.peer]||0)),mr=rk.findIndex(p=>p.isMe)+1,uniq=rk.length<2||(G.tot[rk[0].peer]||0)>(G.tot[rk[1].peer]||0);
   body=`<div class="card center">${me?circ(me.presence.n,"lg",me.presence.e):""}<div class="rk">المركز ${ORD[mr-1]||mr}</div></div>
-  <div class="pod">${rk.slice(0,3).map((p,i)=>`<div class="pc ${i===0?"first":""}">${p.peer===ldr()?'<span class="cr">👑</span>':""}<span class="bdg">${i+1}</span>${circ(p.presence.n,"",p.presence.e)}<span class="an">${esc(p.presence.n)}</span><span class="pt">${G.tot[p.peer]||0} نقطة</span></div>`).join("")}</div>
+  <div class="pod">${rk.slice(0,3).map((p,i)=>`<div class="pc ${i===0?"first":""}">${i===0&&uniq?'<span class="cr">👑</span>':""}<span class="bdg">${i+1}</span>${circ(p.presence.n,"",p.presence.e)}<span class="an">${esc(p.presence.n)}</span><span class="pt">${G.tot[p.peer]||0} نقطة</span></div>`).join("")}</div>
   ${rk.length>3?`<div class="card">${rk.slice(3).map((p,i)=>`<div class="lb"><span>${i+4}. ${esc(p.presence.n)}</span><span>${G.tot[p.peer]||0} نقطة</span></div>`).join("")}</div>`:""}
   ${host?'<button id="ag">لعبة جديدة</button>':'<p class="center mut">بانتظار القائد…</p>'}`;
  }
@@ -821,11 +850,12 @@ function bind(){
  if(g("avb"))g("avb").onclick=openAv;
  $.querySelectorAll("[data-ac]").forEach(b=>b.onclick=()=>{avCat=b.dataset.ac;render()});
  $.querySelectorAll("[data-ai]").forEach(b=>b.onclick=()=>{const v=+b.dataset.ai;avD[avCat]=v;if(avCat==="g"){avD.h=0;avD.ex=0}render()});
- if(g("avok"))g("avok").onclick=()=>{myAv=serAv(avD);try{localStorage.setItem("avc",myAv)}catch(e){}avOpen=false;if(R)R.presence({e:myAv});render()};
+ if(g("avok"))g("avok").onclick=()=>{myAv=serAv(avD);avManual=true;try{localStorage.setItem("avm","1")}catch(e){}try{localStorage.setItem("avc",myAv)}catch(e){}avOpen=false;if(R)R.presence({e:myAv});render()};
  if(g("avno"))g("avno").onclick=()=>{avOpen=false;render()};
  if(g("cpc"))g("cpc").onclick=async()=>note(await copyTxt(code)?"تم نسخ الكود":"تعذر النسخ");
  if(g("inv"))g("inv").onclick=async()=>note(await copyTxt(roomLink())?"تم نسخ رابط الغرفة":"تعذر النسخ");
  if(g("shr"))g("shr").onclick=async()=>{const t="تعال العب معي نفس الموجة! كود الغرفة: "+code;if(navigator.share&&isWeb()&&/Android|iPhone|iPad/i.test(navigator.userAgent)){try{await navigator.share({title:"نفس الموجة",text:t,url:roomLink()});return}catch(e){if(e&&e.name==="AbortError")return}}note(await copyTxt(t+"\n"+roomLink())?"تم نسخ رابط الدعوة":"تعذر النسخ")};
+ if(g("nm"))g("nm").oninput=()=>{nick=g("nm").value;const b0=myAv;autoAv();if(myAv!==b0)render()};
  if(g("upd"))g("upd").onclick=forceUpd;
  if(g("upd2"))g("upd2").onclick=forceUpd;
  if(g("lv"))g("lv").onclick=leave;
