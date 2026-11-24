@@ -401,7 +401,7 @@ const XRAW=`أكلة شعبية خليجية؟|مرقوق,قرصان,سليق,ث
 const XM={};XRAW.split("\n").forEach(l=>{const i=l.indexOf("|");XM[l.slice(0,i)]=l.slice(i+1)});
 const parseQ=l=>{const[q,a]=l.split("|"),x=XM[q],A=a.split(",").map(z=>z.split("/")),bs=new Set(A.flat().map(norm));return{q,a:A,x:x?x.split(",").map(z=>z.split("/")).filter(z=>!z.some(w=>bs.has(norm(w)))):[]}};
 const BANK=RAW.map(parseQ);
-const VER="20261124a";
+const VER="20261124b";
 const PTS=[40,30,20,15,10,5],SECS=60,TRIES=5,HINTS=3,ROUNDS=5,MAX=20;
 const lev=(a,b)=>{const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i]);for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n]};
 const SYN=`زواج,عرس,فرح,زفاف,زفه,ملجه,حفل زواج,حفله زواج,حفل عرس,ملكه
@@ -689,9 +689,10 @@ function render(){
 const ENC=["g","sk","h","ey","mo","ex","bg","cl"],TABS=["g","sk","h","ey","mo","ex","cl","bg"];
 const AN={g:2,sk:7,ey:6,mo:5,ex:6,cl:7,bg:12};
 const cnt=(k,o)=>k==="h"?HAIR[o.g].length:AN[k];
-const parseAv=c=>{if(!/^[0-9a-z]{7,8}$/.test(c||""))return null;const o={};ENC.forEach((k,i)=>{let v=parseInt(c[i]||"0",36);o[k]=v<cnt(k,o)?v:0});return o};
+const HIDE={mo:[3]};
+const parseAv=c=>{if(!/^[0-9a-z]{7,8}$/.test(c||""))return null;const o={};ENC.forEach((k,i)=>{let v=parseInt(c[i]||"0",36);o[k]=v<cnt(k,o)?v:0});if(HIDE.mo.includes(o.mo))o.mo=0;return o};
 const serAv=o=>ENC.map(k=>(o[k]|0).toString(36)).join("");
-const rndAv=g=>{const o={g:g===undefined?Math.floor(Math.random()*2):g};ENC.forEach(k=>{if(k!=="g")o[k]=Math.floor(Math.random()*cnt(k,o))});return serAv(o)};
+const rndAv=g=>{const o={g:g===undefined?Math.floor(Math.random()*2):g};ENC.forEach(k=>{if(k!=="g")o[k]=Math.floor(Math.random()*cnt(k,o))});if(HIDE.mo.includes(o.mo))o.mo=0;return serAv(o)};
 let avManual=false;try{avManual=localStorage.getItem("avm")==="1"}catch(e){}
 let avOpen=false,avD=null,avCat="h";
 const SK=["#ffd9b8","#f2bf96","#d9a066","#b87a4b","#8a5532","#fde7d3","#6b3f26"],BGC=["#7c3aed","#2563eb","#0d9488","#16a34a","#f59e0b","#e11d48","#db2777","#475569","#0ea5e9","#84cc16","#f97316","#1e1b4b"];
@@ -755,7 +756,7 @@ function avEdit(){
  return `<div class="center"><div class="logo" style="font-size:1.8rem">شخصيتك</div></div>
  <div class="card center"><span class="ci lg" style="width:130px;height:130px;margin:0 auto">${avs(serAv(avD))}</span></div>
  <div class="tabs">${TABS.map(k=>`<button class="tab ${cat===k?"on":""}" data-ac="${k}">${alab(k)}</button>`).join("")}</div>
- <div class="ig">${Array.from({length:n},(_,v)=>item(v)).join("")}</div>
+ <div class="ig">${Array.from({length:n},(_,v)=>v).filter(v=>!(HIDE[cat]||[]).includes(v)).map(item).join("")}</div>
  <div class="row" style="margin-top:16px"><button id="avok">تأكيد</button><button class="sec" id="avno">إلغاء</button></div>`;
 }
 let celebRs=-1;
