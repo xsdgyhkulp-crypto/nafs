@@ -401,7 +401,7 @@ const XRAW=`أكلة شعبية خليجية؟|مرقوق,قرصان,سليق,ث
 const XM={};XRAW.split("\n").forEach(l=>{const i=l.indexOf("|");XM[l.slice(0,i)]=l.slice(i+1)});
 const parseQ=l=>{const[q,a]=l.split("|"),x=XM[q],A=a.split(",").map(z=>z.split("/")),bs=new Set(A.flat().map(norm));return{q,a:A,x:x?x.split(",").map(z=>z.split("/")).filter(z=>!z.some(w=>bs.has(norm(w)))):[]}};
 const BANK=RAW.map(parseQ);
-const VER="20261124b";
+const VER="20261126a";
 const PTS=[40,30,20,15,10,5],SECS=60,TRIES=5,HINTS=3,ROUNDS=5,MAX=20;
 const lev=(a,b)=>{const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i]);for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n]};
 const SYN=`زواج,عرس,فرح,زفاف,زفه,ملجه,حفل زواج,حفله زواج,حفل عرس,ملكه
@@ -612,17 +612,34 @@ function armTimer(){clearTimeout(hostTimer);hostTimer=setTimeout(endRound,SECS*1
 function endRound(){if(!amHost()||G.ph!=="ask")return;clearTimeout(hostTimer);hostTimer=null;nextRound()}
 function nextRound(){if(G.r+1>=G.rounds){G.ph="end"}else{G.r++;G.ph="ld";G.bd={};G.att={};G.rs++}G.seq++;pub()}
 function handle(){
- const Q=curQ(),A=Q.a,pend=players().filter(p=>(p.presence.s|0)>(G.sn[p.peer]|0)&&p.presence.rd===G.r).sort((a,b)=>(a.presence.ts|0)-(b.presence.ts|0));
- if(!pend.length)return;
- pend.forEach(p=>{G.sn[p.peer]=p.presence.s|0;const a=tries(p.peer);if(a<=0)return;
-  const k=norm(p.presence.a||""),mine=G.bd[p.peer]||(G.bd[p.peer]={}),have={},usedX={},ev=t=>({n:(G.ev.n|0)+1,k:t,by:p.peer});
-  Object.keys(mine).forEach(x=>{if(x[0]==="k")have[+x.slice(1)]=1;else usedX[+x.slice(1)]=1});
+ const Q=curQ(),A=Q.a,pend=[],del={};
+ players().forEach(p=>{
+  const sn=G.sn[p.peer]|0,ps=p.presence.s|0,q=GS[p.peer]||{};
+  if(ps>sn&&p.presence.rd===G.r)pend.push({id:p.peer,s:ps,a:p.presence.a,ts:p.presence.ts|0});
+  Object.keys(q).forEach(k=>{const s=+k,e=q[k]||{};if(s<=sn){del[p.peer+"/"+k]=null;return}if(e.rd!==G.r){del[p.peer+"/"+k]=null;return}if(s===ps&&p.presence.rd===G.r)return;pend.push({id:p.peer,s,a:e.a,ts:e.ts|0})})});
+ if(!pend.length){if(base&&Object.keys(del).length)base.child("gs").update(del);return}
+ pend.sort((a,b)=>a.ts-b.ts||a.s-b.s);
+ pend.forEach(g0=>{const id=g0.id;if(g0.s<=(G.sn[id]|0))return;G.sn[id]=g0.s;del[id+"/"+g0.s]=null;const a=tries(id);if(a<=0)return;
+  const k=norm(g0.a||""),mine=G.bd[id]||(G.bd[id]={}),have={},ev=t=>({n:(G.ev.n|0)+1,k:t,by:id,sq:g0.s});
+  Object.keys(mine).forEach(x=>{if(x[0]==="k")have[+x.slice(1)]=1});
   const i=match(k,A,have);
-  if(i>=0){mine["k"+i]=PTS[i];G.tot[p.peer]=(G.tot[p.peer]||0)+PTS[i];G.ev={...ev("ok"),i}}
+  if(i>=0){mine["k"+i]=PTS[i];G.tot[id]=(G.tot[id]||0)+PTS[i];G.ev={...ev("ok"),i}}
   else if(match(k,A,{})>=0)G.ev=ev("dup");
-  else if(match(k,Q.x||[],{})>=0)G.ev=ev("ex");
-  else{G.att[p.peer]=a-1;G.ev=ev("no")}});
+  else{G.att[id]=a-1;G.ev=ev("no")}});
+ if(base&&Object.keys(del).length)base.child("gs").update(del);
  if(done())endRound();else{G.seq++;pub()}
+}
+const optLive=()=>opt.filter(o=>o.rs===G.rs&&o.s>(G.sn[pid]|0));
+const heartsNow=()=>Math.max(0,tries(pid)-optLive().filter(o=>o.k==="no").length);
+function predict(v,s){
+ const Q=curQ();if(!Q||heartsNow()<=0)return;
+ const k=norm(v),A=Q.a,have={};
+ Object.keys(G.bd[pid]||{}).forEach(x=>{if(x[0]==="k")have[+x.slice(1)]=1});
+ optLive().forEach(o=>{if(o.k==="ok")have[o.i]=1});
+ const i=match(k,A,have),kind=i>=0?"ok":match(k,A,{})>=0?"dup":"no";
+ opt.push({s,rs:G.rs,k:kind,i});playedSeq.add(s);
+ if(kind==="ok")snd("win");else if(kind==="no")snd("bad");else note("هذا الجواب انكشف لك قبل");
+ render();
 }
 function restoreScores(){
  if(!amHost()||G.ph==="lobby")return;
@@ -643,7 +660,7 @@ function onPeers(){
   if(G.ph==="rev"&&!revTimer)revTimer=setTimeout(()=>{revTimer=null;if(amHost()&&G.ph==="rev")nextRound()},7000);
  }else{clearTimeout(hostTimer);hostTimer=null;clearTimeout(ldTimer);ldTimer=null;clearTimeout(revTimer);revTimer=null}
  if(G.rs!==lastRs){lastRs=G.rs;localStart=Date.now();hintSlots=[];if(G.ph==="ld"&&G.r===0)hintsLeft=HINTS;if(G.ph==="ask"&&primed)snd("start")}
- if(G.ev&&G.ev.n!==lastEv){const e=G.ev;if(primed&&lastEv!==null){if(e.by===pid){if(e.k==="ok")snd("win");else if(e.k==="no")snd("bad");else if(e.k==="dup")note("هذا الجواب انكشف لك قبل")}};lastEv=e.n}
+ if(G.ev&&G.ev.n!==lastEv){const e=G.ev;if(primed&&lastEv!==null){if(e.by===pid&&!playedSeq.has(e.sq)){if(e.k==="ok")snd("win");else if(e.k==="no")snd("bad");else if(e.k==="dup")note("هذا الجواب انكشف لك قبل")}};lastEv=e.n}
  if(G.ph==="ask"&&primed&&found(pid)>=nA()&&celebRs!==G.rs){celebRs=G.rs;const pts=Object.values(G.bd[pid]||{}).reduce((a,b)=>a+b,0);showCeleb(pts);setTimeout(()=>snd("fan"),350)}
  if(G.ph!==lastPh)lastPh=G.ph
  pl.forEach(p=>{const n=p.presence.rs|0;if(n>(seenRx[p.peer]|0)){seenRx[p.peer]=n;if(primed&&!p.isMe){toast=p.presence.n+" "+p.presence.rx;snd("pop");setTimeout(()=>{toast="";render()},2500)}}});
@@ -660,9 +677,9 @@ async function enter(c,create){
   if(!create&&!(await db.ref("rooms/"+c+"/p").get()).exists()){notice="ما لقيت غرفة بهالكود، تأكد من الرابط أو الكود";return render()}
   code=c;pending="";try{history.replaceState(null,"",location.pathname)}catch(e){}base=db.ref("rooms/"+c);isCreator=create;joinedAt=create?0:Date.now();primed=false;lastEv=null;lastPh="";sel=null;G=G0();if(create)G.ld=pid;
   myS={n:nick.slice(0,14),e:myAv,t:joinedAt,a:"",s:0,rd:-1,rs:0,ts:0,v:VER};
-  const me=base.child("p/"+pid);me.onDisconnect().remove();await me.set(myS);
-  R={presence:p=>{myS={...myS,...p};P[pid]=myS;return me.update(p)},leave:()=>{base.off();me.remove()}};
-  base.on("value",snap=>{const v=snap.val()||{};P=v.p||{};if(v.k&&v.k[pid]){notice="تم طردك من الغرفة";return leave()}if(v.g&&!amHost())G=normG(v.g);onPeers()});
+  const me=base.child("p/"+pid);me.onDisconnect().remove();base.child("gs/"+pid).onDisconnect().remove();await me.set(myS);
+  R={presence:p=>{myS={...myS,...p};P[pid]=myS;return me.update(p)},leave:()=>{base.off();me.remove();base.child("gs/"+pid).remove()}};
+  base.on("value",snap=>{const v=snap.val()||{};P=v.p||{};GS=v.gs||{};if(v.k&&v.k[pid]){notice="تم طردك من الغرفة";return leave()}if(v.g&&!amHost())G=normG(v.g);onPeers()});
   if(create)pub();
   view="room";render();
  }catch(e){notice="تعذر الدخول للغرفة";R=null;render()}
@@ -689,10 +706,10 @@ function render(){
 const ENC=["g","sk","h","ey","mo","ex","bg","cl"],TABS=["g","sk","h","ey","mo","ex","cl","bg"];
 const AN={g:2,sk:7,ey:6,mo:5,ex:6,cl:7,bg:12};
 const cnt=(k,o)=>k==="h"?HAIR[o.g].length:AN[k];
-const HIDE={mo:[3]};
-const parseAv=c=>{if(!/^[0-9a-z]{7,8}$/.test(c||""))return null;const o={};ENC.forEach((k,i)=>{let v=parseInt(c[i]||"0",36);o[k]=v<cnt(k,o)?v:0});if(HIDE.mo.includes(o.mo))o.mo=0;return o};
+const HIDE={mo:[3,4]};
+const parseAv=c=>{if(!/^[0-9a-z]{7,8}$/.test(c||""))return null;const o={};ENC.forEach((k,i)=>{let v=parseInt(c[i]||"0",36);o[k]=v<cnt(k,o)?v:0});Object.keys(HIDE).forEach(k=>{if(HIDE[k].includes(o[k]))o[k]=0});return o};
 const serAv=o=>ENC.map(k=>(o[k]|0).toString(36)).join("");
-const rndAv=g=>{const o={g:g===undefined?Math.floor(Math.random()*2):g};ENC.forEach(k=>{if(k!=="g")o[k]=Math.floor(Math.random()*cnt(k,o))});if(HIDE.mo.includes(o.mo))o.mo=0;return serAv(o)};
+const rndAv=g=>{const o={g:g===undefined?Math.floor(Math.random()*2):g};ENC.forEach(k=>{if(k!=="g")o[k]=Math.floor(Math.random()*cnt(k,o))});Object.keys(HIDE).forEach(k=>{if(HIDE[k].includes(o[k]))o[k]=0});return serAv(o)};
 let avManual=false;try{avManual=localStorage.getItem("avm")==="1"}catch(e){}
 let avOpen=false,avD=null,avCat="h";
 const SK=["#ffd9b8","#f2bf96","#d9a066","#b87a4b","#8a5532","#fde7d3","#6b3f26"],BGC=["#7c3aed","#2563eb","#0d9488","#16a34a","#f59e0b","#e11d48","#db2777","#475569","#0ea5e9","#84cc16","#f97316","#1e1b4b"];
@@ -759,7 +776,7 @@ function avEdit(){
  <div class="ig">${Array.from({length:n},(_,v)=>v).filter(v=>!(HIDE[cat]||[]).includes(v)).map(item).join("")}</div>
  <div class="row" style="margin-top:16px"><button id="avok">تأكيد</button><button class="sec" id="avno">إلغاء</button></div>`;
 }
-let celebRs=-1;
+let celebRs=-1,GS={},opt=[];const playedSeq=new Set();
 function showCeleb(pts){
  const old=document.getElementById("cel");if(old)old.remove();
  const C=["#ffb703","#ff6b81","#22c55e","#60a5fa","#c084fc","#fff"];
@@ -783,8 +800,8 @@ function lobby(){
 }
 const mask=x=>[...x].map((c,k)=>k%2===0||c===" "?c:"_").join("");
 function slots(rev){
- const A=curQ().a,mine=G.bd[pid]||{};
- return `<div class="bd">${A.map((al,i)=>{const b=mine["k"+i];return b!==undefined?`<div class="sl on"><small>${b}</small>${esc(al[0])}</div>`:rev?`<div class="sl miss"><small>${PTS[i]}</small>${esc(al[0])}</div>`:hintSlots.includes(i)?`<div class="sl hint">${esc(mask(al[0]))}</div>`:`<div class="sl"><span class="nm">${i+1}</span></div>`}).join("")}</div>`;
+ const A=curQ().a,mine=G.bd[pid]||{},ol=optLive().filter(o=>o.k==="ok");
+ return `<div class="bd">${A.map((al,i)=>{const b=mine["k"+i],ob=ol.some(o=>o.i===i);return b!==undefined||ob?`<div class="sl on"><small>${b!==undefined?b:PTS[i]}</small>${esc(al[0])}</div>`:rev?`<div class="sl miss"><small>${PTS[i]}</small>${esc(al[0])}</div>`:hintSlots.includes(i)?`<div class="sl hint">${esc(mask(al[0]))}</div>`:`<div class="sl"><span class="nm">${i+1}</span></div>`}).join("")}</div>`;
 }
 const topIds=()=>{const pl=players(),m=Math.max(0,...pl.map(p=>G.tot[p.peer]||0));const t=m>0?pl.filter(p=>(G.tot[p.peer]||0)===m).map(p=>p.peer):[];return t.length===1?t:[]};
 const hue=n=>[...n].reduce((a,c)=>a+c.charCodeAt(0),0)%360;
@@ -816,7 +833,7 @@ function roomView(){
  }else if(G.ph==="ld"){
   body=`<div class="card center"><div class="sp"></div><div class="big">${G.r===0?"جاري تجهيز اللعبة…":"الجولة "+(G.r+1)}</div><div class="q" id="cd3" style="font-size:3rem;color:var(--acc)"></div></div>`;
  }else if(G.ph==="ask"){
-  const t=tries(pid),full=found(pid)>=nA(),rem=Math.max(0,SECS-Math.floor((Date.now()-localStart)/1000));
+  const t=heartsNow(),full=found(pid)>=nA(),rem=Math.max(0,SECS-Math.floor((Date.now()-localStart)/1000));
   body=`<div class="top"><div class="tl"><span class="lb2">الوقت</span><span class="bar"><i id="tmb" style="width:${rem/SECS*100}%"></i></span><b id="tm">${rem}</b></div><div class="tl"><span class="lb2">المحاولات</span><span class="hts">${hearts(t)}</span></div></div>
   <div class="qbox"><span class="rd">الجولة ${G.r+1} / ${G.rounds}</span>${esc(curQ().q)}</div>${full?`<p class="center big">جبت كل الإجابات 🎉<br><span class="mut" style="font-size:.9rem">انتظر لين يخلص السؤال</span></p>`:t>0?`<div class="row"><input id="a" maxlength="24" placeholder="اكتب جوابك" autocomplete="off" enterkeyhint="send"><button class="sm" id="ok" style="width:70px">✓</button></div>`:`<p class="center mut">خلصت محاولاتك، انتظر البقية</p>`}
   ${slots(false)}
@@ -839,7 +856,7 @@ function bind(){
  if(g("jp"))g("jp").onclick=()=>enter(pending,false);
  if(g("jn"))g("jn").onclick=()=>{const c=dig(g("cd").value);if(!c){notice="اكتب كود الغرفة";return render()}enter(c,false)};
  if(g("st"))g("st").onclick=startGame;
- if(g("ok")){const send=()=>{const v=g("a").value.trim();if(!norm(v))return;mySeq++;R.presence({a:v,s:mySeq,rd:G.r,ts:Date.now()});g("a").value=""};g("ok").onclick=send;g("a").onkeydown=e=>{if(e.key==="Enter")send()}}
+ if(g("ok")){const send=()=>{const v=g("a").value.trim();if(!norm(v))return;mySeq++;const s=mySeq,ts=Date.now();R.presence({a:v,s,rd:G.r,ts});try{base.child("gs/"+pid+"/"+s).set({a:v,rd:G.r,ts})}catch(e){}g("a").value="";predict(v,s)};g("ok").onclick=send;g("a").onkeydown=e=>{if(e.key==="Enter")send()}}
  if(g("ht"))g("ht").onclick=()=>{if(hintsLeft<=0||hintSlots.length>0)return;const A=curQ().a,i=A.findIndex((al,j)=>!(G.bd[pid]&&G.bd[pid]["k"+j]!==undefined)&&!hintSlots.includes(j));if(i<0)return;hintSlots.push(i);hintsLeft--;render()};
  $.querySelectorAll("[data-pl]").forEach(b=>b.onclick=()=>{if(amHost()&&b.dataset.pl!==pid){sel=b.dataset.pl;render()}});
  if(g("tl"))g("tl").onclick=()=>{G.ld=sel;sel=null;G.seq++;pub();render()};
